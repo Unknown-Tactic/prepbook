@@ -424,6 +424,20 @@ a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
 .gs-row input { flex: 1 1 220px; min-width: 0; font-family: var(--f-mono); }
 .gs-msg { font-size: 14px; margin-top: 8px; }
 .gs-msg textarea { width: 100%; margin-top: 6px; font-size: 12px; }
+#g-manual { margin-top: 14px; } #g-manual > summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--muted); }
+#g-manual.plain > summary { display: none; }
+.drill.pz { border-color: color-mix(in srgb, var(--good) 45%, var(--line)); }
+.pz-top { display: flex; align-items: center; gap: 10px; }
+.pz-h { margin: 0; }
+.pz-prompt { font: 600 17px/1.3 var(--f-display); margin: 12px 0 0; min-height: 22px; }
+.pz-prompt[data-kind="good"] { color: var(--good); } .pz-prompt[data-kind="bad"] { color: var(--bad); }
+.pzboard { max-width: min(560px, 100%); touch-action: none; user-select: none; -webkit-user-select: none; }
+.pzboard .sq { cursor: pointer; }
+.pzboard .sq.tgt::after, .pzboard .sq.tgtc::after { z-index: 1; }
+.pz-act { justify-content: center; }
+.pz-set { margin-top: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+.pz-set summary { cursor: pointer; font-weight: 600; }
+.pz-set .lbl { display: block; }
 .gf { display: flex; flex-direction: column; gap: 6px; }
 .gf .lbl { margin-top: 8px; }
 .gf .cap { margin: 0; }
@@ -498,6 +512,7 @@ a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
         <div class="d-actions"><button class="ghostbtn" id="hint" type="button">Hint</button><button class="ghostbtn" id="skip" type="button">Skip position</button></div>
       </div>
       <div id="t-sum" hidden></div>
+      <div id="t-puz" hidden></div>
     </section>
 
     <section class="view" id="v-map" hidden>
@@ -573,12 +588,14 @@ a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
         <input id="g-cc" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. nathant">
         <div id="g-cc-links" class="links"></div>
         <div id="g-filters" hidden></div>
-        <button class="primary" id="g-fetch" type="button" hidden>Fetch my games and compare</button>
+        <button class="primary" id="g-fetch" type="button" hidden>Check my games against my prep</button>
+        <details id="g-manual" open><summary>Or check a PGN file instead</summary>
         <div id="g-dl-help"><span class="lbl">Games file</span></div>
         <label class="filebtn"><input type="file" id="g-file" multiple accept=".pgn,.txt,text/plain,application/x-chess-pgn,application/vnd.chess-pgn"><span class="ghostbtn">Choose games file</span><span id="g-fname">No file chosen</span></label>
         <label class="lbl" for="g-text">Or paste games</label>
         <textarea id="g-text" placeholder="Paste one or more games in PGN format"></textarea>
         <button class="primary" id="g-go" type="button">Compare with my prep</button>
+        </details>
         <div id="g-msg" aria-live="polite"></div>
       </div>
       <div id="g-report"></div>
@@ -1757,6 +1774,8 @@ function renderTrain() {
   $('#t-home').hidden = trainMode !== 'home';
   $('#t-drill').hidden = trainMode !== 'drill';
   $('#t-sum').hidden = trainMode !== 'summary';
+  $('#t-puz').hidden = trainMode !== 'puzzle';
+  if (trainMode === 'puzzle') pzRender();
   if (trainMode === 'home') renderHome();
   if (trainMode === 'summary') renderSummary();
 }
@@ -1802,7 +1821,8 @@ function renderHome() {
     </div>
     ${drillsHtml()}`;
   $('#start').addEventListener('click', () => startSession());
-  $$('.drill', $('#t-home')).forEach(b => b.addEventListener('click', () => openDrill(b.dataset.drill)));
+  $$('.drill[data-drill]', $('#t-home')).forEach(b => b.addEventListener('click', () => openDrill(b.dataset.drill)));
+  $('#open-puz') && $('#open-puz').addEventListener('click', openPuzzles);
   $('#focus').addEventListener('change', e => { st.focus = e.target.value; touch('meta'); renderHome(); });
   bindSegs($('#t-home'));
 }
@@ -1824,7 +1844,7 @@ function drillsHtml() {
   return `<h3 class="h3">Focused drills</h3><div class="drills">${Object.entries(DRILLS).map(([k, d]) => {
     const n = drillCount(k, '');
     return `<button class="drill" type="button" data-drill="${k}" ${n ? '' : 'disabled'}><span class="dr-t"><span class="dr-n">${d.name}</span><span class="dr-c">${n} ${unit[k][n === 1 ? 0 : 1]}</span></span><span class="dr-d">${n ? d.desc : k === 'cold' ? 'Unlocks once you’ve learned some moves.' : k === 'weak' ? 'Nothing yet. Positions you miss twice show up here.' : k === 'games' ? 'Nothing yet. Run Game check and every position where you left your prep lands here.' : 'Nothing yet. When you play a move that belongs to a similar position, it’s caught here.'}</span></button>`;
-  }).join('')}</div><div id="picker" hidden></div>`;
+  }).join('')}${IN_CLAUDE ? '' : `<button class="drill pz" type="button" id="open-puz"><span class="dr-t"><span class="dr-n">${esc(pzTitle())}</span><span class="dr-c">${Object.keys(pzDone().seen).length} done</span></span><span class="dr-d">Puzzles from Lichess, taken from real ${esc(pzName(pzSet().angle))} games. Pulled straight from Lichess, a fresh set each time.</span></button>`}</div><div id="picker" hidden></div>`;
 }
 function openDrill(kind) {
   const studies = state.studies.filter(s => drillCount(kind, s.id) > 0);
@@ -2110,6 +2130,8 @@ function walkGame(moves, side, R) {
       pos = mv.next;
       continue;
     }
+    // a different first move just means another opening, not a slip from prep
+    if (mine && list.length && i === (side === 'w' ? 0 : 1)) return { kind: 'offstart', ply: i, played: mv.san, num: pos.full };
     const node = nodes.find(n => (mine ? n.my : n.opp).length) || nodes[0];
     const cardNode = mine ? node : null;
     return {
@@ -2163,15 +2185,19 @@ function gameLinks() {
   $('#g-howto').hidden = !IN_CLAUDE;
   if (!IN_CLAUDE) { $('#g-li-links').innerHTML = ''; $('#g-cc-links').innerHTML = ''; }
   renderGameFilters();
+  const man = $('#g-manual');
+  if (!man.dataset.init) { man.dataset.init = 1; man.open = IN_CLAUDE; }
+  man.classList.toggle('plain', IN_CLAUDE);
 }
 function renderGames() {
+  if (!IN_CLAUDE) setTimeout(autoCheck, 0);
   if (document.activeElement !== $('#g-li')) $('#g-li').value = state.settings.liUser || '';
   if (document.activeElement !== $('#g-cc')) $('#g-cc').value = state.settings.ccUser || '';
   gameLinks();
   const G = state.gameReport && (state.gameReport.side || state.settings.side) === state.settings.side ? state.gameReport.games : [];
   const box = $('#g-report');
   if (!G.length) { box.innerHTML = ''; return; }
-  const inPrep = G.filter(g => g.kind !== 'noprep' && g.kind !== 'error');
+  const inPrep = G.filter(g => g.kind !== 'noprep' && g.kind !== 'error' && g.kind !== 'offstart');
   const mistakes = G.filter(g => g.kind === 'mistake'), surprises = G.filter(g => g.kind === 'surprise');
   const ends = G.filter(g => g.kind === 'end' && g.ply < g.total);
   const avg = inPrep.length ? (inPrep.reduce((a, g) => a + g.ply, 0) / inPrep.length / 2).toFixed(1) : '—';
@@ -2207,9 +2233,10 @@ function renderGames() {
     <h3 class="h3">All games</h3>
     <div class="table"><table><thead><tr><th>Game</th><th>Prep</th><th class="num">Result</th></tr></thead><tbody>
     ${G.map(g => `<tr><td><span class="gdot ${g.colour}"></span>${esc(nm(g))}<span class="cap block">${esc(g.date)}${g.site ? ' · ' + g.site : ''}${g.url ? ` · <a href="${esc(g.url)}" target="_blank" rel="noopener">open ↗</a>` : ''}</span></td>
-      <td>${g.kind === 'noprep' ? '<span class="pill n">no matching study</span>' : g.kind === 'error' ? '<span class="pill n">couldn’t read</span>' : `<span class="pill ${g.kind === 'mistake' ? 'r' : g.kind === 'surprise' ? 'y' : 'g'}">${{ mistake: 'You left prep', surprise: 'Opponent left prep', end: 'Prep ran out', whole: 'All in prep' }[g.kind]}</span><span class="cap block">${g.kind === 'whole' ? 'whole game' : 'at move ' + g.num}</span>`}</td>
+      <td>${g.kind === 'offstart' ? `<span class="pill n">different first move</span><span class="cap block">you played ${esc(g.played)}</span>` : g.kind === 'noprep' ? '<span class="pill n">no matching study</span>' : g.kind === 'error' ? '<span class="pill n">couldn’t read</span>' : `<span class="pill ${g.kind === 'mistake' ? 'r' : g.kind === 'surprise' ? 'y' : 'g'}">${{ mistake: 'You left prep', surprise: 'Opponent left prep', end: 'Prep ran out', whole: 'All in prep' }[g.kind]}</span><span class="cap block">${g.kind === 'whole' ? 'whole game' : 'at move ' + g.num}</span>`}</td>
       <td class="num">${resultFor(g)}</td></tr>`).join('')}
     </tbody></table></div>
+    ${G.some(g => g.kind === 'offstart') ? `<p class="cap">${G.filter(g => g.kind === 'offstart').length} game(s) started with a different first move from yours, so they aren’t counted as leaving your prep.</p>` : ''}
     ${G.some(g => g.kind === 'noprep') ? `<p class="cap">${G.filter(g => g.kind === 'noprep').length} game(s) had no matching study, usually because they were played with the colour you haven’t imported yet.</p>` : ''}`;
   $$('[data-gdrill]', box).forEach(b => b.onclick = () => {
     const c = b.dataset.gdrill;
@@ -3765,13 +3792,25 @@ async function fetchGamesDirect() {
   await runGameCheck(text);
   msg.innerHTML += ` <span class="cap">${[nLi ? nLi + ' Lichess' : '', nCc ? nCc + ' Chess.com' : ''].filter(Boolean).join(' + ')} games · ${periodName(f.period)}.${notes.length ? ' ' + esc(notes.join(' ')) : ''}</span>`;
 }
+// runs Game check by itself when you open the Games tab or change a filter (games are kept on this device, so it's quick)
+let autoKey = '', autoAt = 0, autoBusy = false;
+async function autoCheck() {
+  if (IN_CLAUDE || autoBusy || view !== 'games') return;
+  const li = (state.settings.liUser || '').trim(), cc = (state.settings.ccUser || '').trim();
+  if (!li && !cc) return;
+  if (!state.chapters.some(c => !studyOf(c.studyId)?.example && c.side === state.settings.side)) return;
+  const key = JSON.stringify([li, cc, state.settings.side, gfSet().speeds, gfSet().period, gfSet().rated, repVersion]);
+  if (key === autoKey && Date.now() - autoAt < 10 * 60e3) return;
+  autoKey = key; autoAt = Date.now(); autoBusy = true;
+  try { await fetchGamesDirect(); } finally { autoBusy = false; }
+}
 function renderGameFilters() {
   const box = $('#g-filters');
   if (!box) return;
   box.hidden = IN_CLAUDE;
   if (IN_CLAUDE) return;
   box.innerHTML = gfHtml('g');
-  gfBind(box, renderGameFilters);
+  gfBind(box, () => { renderGameFilters(); autoCheck(); });
 }
 
 // ---------- History tab: how your games went, branch by branch ----------
@@ -3930,6 +3969,237 @@ function bindHistoryOut() {
   });
 }
 
+// ---------- Puzzles from Lichess, by opening (GitHub copy) ----------
+// Lichess's puzzle API: /api/puzzle/batch/{angle} (many at once) and /api/puzzle/next (one, can pick the colour)
+const PZ = { gen: 1, queue: [], cur: null, busy: false, err: '', sel: null, sess: { n: 0, ok: 0 }, timer: 0 };
+function pzSet() { const p = state.settings.puz || {}; return { angle: p.angle || 'Reti_Opening', color: p.color || 'white', diff: p.diff || 'normal' }; }
+const pzName = a => a === 'Reti_Opening' ? 'Reti' : a.replace(/_/g, ' ');
+const pzTitle = () => `${pzName(pzSet().angle)} Puzzles`;
+const pzDone = () => state.puzzles || (state.puzzles = { seen: {} });
+const pzKey = () => { const p = pzSet(); return [p.angle, p.color, p.diff].join('|'); };
+function pzLoadQ() { try { const o = JSON.parse(localStorage.getItem('prepbook.pzq') || '{}'); PZ.queue = o.key === pzKey() ? o.q || [] : []; } catch (e) { PZ.queue = []; } }
+function pzSaveQ() { try { localStorage.setItem('prepbook.pzq', JSON.stringify({ key: pzKey(), q: PZ.queue.slice(0, 120) })); } catch (e) { /* full */ } }
+function uciMove(pos, u) {
+  if (!u) return null;
+  const from = Chess0.sqIdx(u.slice(0, 2)), to = Chess0.sqIdx(u.slice(2, 4)), pr = u[4] || null;
+  return Chess0.legal(pos).find(m => m.from === from && m.to === to && (m.promo || null) === pr) || null;
+}
+const uciOf = m => Chess0.sqName(m.from) + Chess0.sqName(m.to) + (m.promo || '');
+const inCheck = pos => Chess0.attacked(pos.b, Chess0.kingSq(pos.b, pos.turn), pos.turn === 'w' ? 'b' : 'w');
+// works out the puzzle position from the game moves Lichess sends
+function pzPrepare(j) {
+  if (!j || !j.game || !j.puzzle) return null;
+  const sans = String(j.game.pgn || '').split(/\s+/).filter(s => s && !/^\d+\./.test(s));
+  const upto = n => {
+    let pos = Chess0.parse(Chess0.START), last = null;
+    for (const s of sans.slice(0, n)) { const mv = Chess0.fromSan(pos, s); if (!mv) return null; last = { from: mv.from, to: mv.to }; pos = mv.next; }
+    return { pos, last };
+  };
+  for (const n of [j.puzzle.initialPly + 1, sans.length, j.puzzle.initialPly]) {
+    const r = upto(n);
+    if (r && uciMove(r.pos, j.puzzle.solution[0])) {
+      return { id: j.puzzle.id, rating: j.puzzle.rating, themes: j.puzzle.themes || [], sol: j.puzzle.solution, fen: Chess0.fen(r.pos), last: r.last, color: r.pos.turn, gameId: j.game.id };
+    }
+  }
+  return null;
+}
+async function pzFetch() {
+  const gen = PZ.gen;
+  if (PZ.busy === gen) return;
+  const p = pzSet(), seen = pzDone().seen, want = p.color === 'both' ? '' : p.color[0];
+  const fits = z => gen === PZ.gen && z && !(z.id in seen) && !PZ.queue.some(q => q.id === z.id) && (!want || z.color === want);
+  PZ.busy = gen; PZ.err = '';
+  pzRender();
+  let reached = false;
+  try {
+    const r = await fetch(`${LI}/api/puzzle/batch/${encodeURIComponent(p.angle)}?nb=50&difficulty=${p.diff}`, { headers: { Accept: 'application/json' } });
+    if (r.ok) { reached = true; const j = await r.json(); for (const x of j.puzzles || []) { const z = pzPrepare(x); if (fits(z)) PZ.queue.push(z); } }
+    // top up one at a time with the colour you asked for
+    for (let i = 0; i < 10 && PZ.queue.length < 8; i++) {
+      const r2 = await fetch(`${LI}/api/puzzle/next?angle=${encodeURIComponent(p.angle)}&difficulty=${p.diff}${want ? '&color=' + p.color : ''}`, { headers: { Accept: 'application/json' } });
+      if (r2.status === 429) break;
+      if (gen !== PZ.gen) return;
+      if (!r2.ok) { if (!reached && (r2.status === 404 || r2.status === 400)) PZ.err = 'angle'; break; }
+      reached = true;
+      const z = pzPrepare(await r2.json());
+      if (fits(z)) PZ.queue.push(z);
+    }
+    if (!reached && !PZ.err && gen === PZ.gen) PZ.err = 'http';
+  } catch (e) { if (gen === PZ.gen) PZ.err = 'net'; }
+  if (gen !== PZ.gen) return;
+  PZ.busy = false;
+  pzSaveQ();
+}
+async function pzNext() {
+  clearTimeout(PZ.timer);
+  PZ.sel = null;
+  if (!PZ.queue.length) { PZ.cur = null; await pzFetch(); }
+  const z = PZ.queue.shift();
+  pzSaveQ();
+  PZ.cur = z ? { ...z, pos: Chess0.parse(z.fen), step: 0, failed: false, done: false, msg: '', kind: '' } : null;
+  pzRender();
+  // quietly top up the queue while you solve
+  if (PZ.cur && PZ.queue.length < 4) pzFetch();
+}
+function pzFinish() {
+  const c = PZ.cur, seen = pzDone().seen;
+  c.done = true;
+  if (!(c.id in seen)) {
+    seen[c.id] = c.failed ? 0 : 1;
+    const ids = Object.keys(seen);
+    if (ids.length > 3000) ids.slice(0, ids.length - 3000).forEach(k => delete seen[k]);
+    PZ.sess.n++; if (!c.failed) PZ.sess.ok++;
+    touch('meta');
+  }
+  c.msg = c.failed ? 'Solved, but not on the first try.' : 'Solved! Well done.';
+  c.kind = c.failed ? '' : 'good';
+}
+function pzReply() {
+  const c = PZ.cur;
+  PZ.timer = setTimeout(() => {
+    if (PZ.cur !== c) return;
+    const m = uciMove(c.pos, c.sol[c.step]);
+    if (!m) { pzFinish(); pzRender(); return; }
+    c.pos = Chess0.fromSan(c.pos, m.san).next; c.last = { from: m.from, to: m.to }; c.step++;
+    if (c.step >= c.sol.length) pzFinish();
+    pzRender();
+  }, 450);
+}
+function pzTry(m) {
+  const c = PZ.cur;
+  if (!c || c.done || c.pos.turn !== c.color) return;
+  const after = Chess0.fromSan(c.pos, m.san).next;
+  const right = uciOf(m) === c.sol[c.step] || (!Chess0.legal(after).length && inCheck(after));
+  if (!right) {
+    c.failed = true; c.msg = 'Not that one. Try again.'; c.kind = 'bad'; c.wrong = { from: m.from, to: m.to };
+    pzRender();
+    setTimeout(() => { if (PZ.cur === c) { c.wrong = null; pzRender(); } }, 650);
+    return;
+  }
+  c.pos = after; c.last = { from: m.from, to: m.to }; c.step++;
+  if (c.step >= c.sol.length || !Chess0.legal(after).length) { pzFinish(); pzRender(); return; }
+  c.msg = 'Correct! Keep going.'; c.kind = 'good';
+  pzRender();
+  pzReply();
+}
+function pzShow() {
+  const c = PZ.cur;
+  if (!c || c.done) return;
+  c.failed = true; c.msg = 'Here’s the solution.'; c.kind = '';
+  const step = () => {
+    if (PZ.cur !== c || c.step >= c.sol.length) { if (PZ.cur === c) { pzFinish(); c.msg = 'That was the solution. Try the next one.'; pzRender(); } return; }
+    const m = uciMove(c.pos, c.sol[c.step]);
+    if (!m) { c.step = c.sol.length; return step(); }
+    c.pos = Chess0.fromSan(c.pos, m.san).next; c.last = { from: m.from, to: m.to }; c.step++;
+    pzRender();
+    PZ.timer = setTimeout(step, 650);
+  };
+  step();
+}
+function pzBoardHtml(c) {
+  const side = c.color, pos = c.pos;
+  let h = '';
+  for (let i = 0; i < 64; i++) {
+    const r = Math.floor(i / 8), f = i % 8;
+    const sq = side === 'w' ? (7 - r) * 8 + f : r * 8 + (7 - f);
+    const pc = pos.b[sq], cls = ((sq & 7) + (sq >> 3)) % 2 ? 'lt' : 'dk';
+    const hl = (c.last && (c.last.from === sq || c.last.to === sq) ? ' last' : '') + (c.wrong && (c.wrong.from === sq || c.wrong.to === sq) ? ' wrongsq' : '') + (PZ.sel === sq ? ' sel' : '') + (c.hint === sq ? ' pulse' : '');
+    const co = (f === 0 ? `<span class="co rk">${(sq >> 3) + 1}</span>` : '') + (r === 7 ? `<span class="co fl">${'abcdefgh'[sq & 7]}</span>` : '');
+    h += `<div class="sq ${cls}${hl}" data-sq="${sq}">${co}${pc ? `<svg class="pc ${pc === pc.toUpperCase() ? 'w' : 'b'}" viewBox="0 0 100 100"><use href="#pc-${pc.toLowerCase()}"/></svg>` : ''}</div>`;
+  }
+  return h;
+}
+function pzRender() {
+  const box = $('#t-puz');
+  if (!box || box.hidden) return;
+  const p = pzSet(), c = PZ.cur, seen = pzDone().seen, ids = Object.values(seen);
+  const allOk = ids.filter(Boolean).length;
+  const err = { net: 'Couldn’t reach Lichess. Check your connection.', http: 'Lichess didn’t send puzzles just now. Try again in a minute.', angle: `Lichess has no puzzles called “${esc(p.angle)}”. Check the opening name.` }[PZ.err];
+  const turnName = c ? (c.color === 'w' ? 'White' : 'Black') : '';
+  box.innerHTML = `
+    <div class="pz-top"><button class="ghostbtn sm" id="pz-back" type="button">‹ Back</button><h2 class="h pz-h">${esc(pzTitle())}</h2></div>
+    <p class="cap">Lichess puzzles from ${esc(pzName(p.angle))} games${p.color === 'both' ? '' : `, playing as ${p.color === 'white' ? 'White' : 'Black'}`}. This session: <b>${PZ.sess.ok} of ${PZ.sess.n}</b> first try · all time: ${allOk} of ${ids.length}.</p>
+    ${c ? `<p class="pz-prompt" data-kind="${c.kind}">${c.msg || `Find the best move for ${turnName}.`}</p>
+      <div class="mboard pzboard" id="pz-board">${pzBoardHtml(c)}</div>
+      <div class="row tight pz-act">
+        ${c.done ? '<button class="primary inline" id="pz-next" type="button">Next puzzle ›</button>' : `<button class="ghostbtn" id="pz-hint" type="button">Hint</button><button class="ghostbtn" id="pz-sol" type="button">Show solution</button><button class="ghostbtn" id="pz-skip" type="button">Skip</button>`}
+        <a class="ghostbtn" href="https://lichess.org/training/${esc(c.id)}" target="_blank" rel="noopener">Open on Lichess ↗</a>
+      </div>
+      <p class="cap">Puzzle rating ${c.rating || '?'}${c.done && c.themes.length ? ' · ' + esc(c.themes.filter(t => !/^(short|long|veryLong|oneMove|middlegame|endgame|opening)$/.test(t)).slice(0, 4).map(t => t.replace(/([A-Z]|\d+)/g, ' $1').toLowerCase()).join(', ')) : ''}${c.done ? ` · <a class="dl" href="https://lichess.org/${esc(c.gameId)}" target="_blank" rel="noopener">see the game ↗</a>` : ''}</p>`
+      : PZ.busy ? '<p class="cap"><span class="sdot wait"></span> Getting puzzles from Lichess…</p>'
+      : `<p class="cap">${err ? `<span class="bad">${err}</span>` : 'No puzzles loaded.'}</p><button class="primary inline" id="pz-retry" type="button">Get puzzles</button>`}
+    <details class="pz-set" ${PZ.setOpen ? 'open' : ''}><summary>Puzzle settings</summary>
+      <span class="lbl">Play as</span>${seg('pzcol', [['white', 'White'], ['black', 'Black'], ['both', 'Both']], p.color)}
+      <span class="lbl">Difficulty</span>${seg('pzdiff', [['easier', 'Easier'], ['normal', 'Normal'], ['harder', 'Harder']], p.diff)}
+      <label class="lbl" for="pz-angle">Opening (Lichess puzzle page or name)</label>
+      <div class="gs-row"><input id="pz-angle" type="text" autocomplete="off" spellcheck="false" value="${esc(p.angle)}" placeholder="https://lichess.org/training/Reti_Opening/white"><button class="ghostbtn" id="pz-angle-go" type="button">Use</button></div>
+      <p class="cap">Paste the address of any Lichess opening puzzle page, like lichess.org/training/Reti_Opening/white.</p>
+    </details>`;
+  $('.pz-set', box).ontoggle = e => { PZ.setOpen = e.target.open; };
+  $('#pz-back').onclick = () => { clearTimeout(PZ.timer); trainMode = 'home'; render(); };
+  $('#pz-next') && ($('#pz-next').onclick = pzNext);
+  $('#pz-retry') && ($('#pz-retry').onclick = pzNext);
+  $('#pz-skip') && ($('#pz-skip').onclick = pzNext);
+  $('#pz-sol') && ($('#pz-sol').onclick = pzShow);
+  $('#pz-hint') && ($('#pz-hint').onclick = () => { const m = uciMove(c.pos, c.sol[c.step]); if (!m) return; c.failed = true; c.hint = m.from; c.msg = 'Hint: the highlighted piece moves. (Counts as not first try.)'; c.kind = ''; pzRender(); });
+  $$('.pz-set .seg', box).forEach(g => g.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    pzChange({ [g.dataset.set === 'pzcol' ? 'color' : 'diff']: b.dataset.val });
+  });
+  const useAngle = () => {
+    const v = $('#pz-angle').value.trim(), m = v.match(/training\/([A-Za-z0-9_]+)(?:\/(white|black))?/);
+    const angle = m ? m[1] : v.replace(/\s+/g, '_');
+    if (!angle) return;
+    pzChange({ angle, ...(m && m[2] ? { color: m[2] } : {}) });
+  };
+  $('#pz-angle-go').onclick = useAngle;
+  $('#pz-angle').onkeydown = e => { if (e.key === 'Enter') useAngle(); };
+  const bd = $('#pz-board');
+  if (bd && c && !c.done) {
+    const legalFrom = sq => Chess0.legal(c.pos).filter(m => m.from === sq);
+    const pick = (from, to) => {
+      const cands = Chess0.legal(c.pos).filter(m => m.from === from && m.to === to);
+      if (!cands.length) return false;
+      const exp = c.sol[c.step] || '';
+      const m = cands.find(x => uciOf(x) === exp) || cands.find(x => x.promo === 'q') || cands[0];
+      PZ.sel = null; c.hint = null;
+      pzTry(m);
+      return true;
+    };
+    bd.onpointerdown = e => {
+      const el = e.target.closest('.sq'); if (!el) return;
+      e.preventDefault();
+      const sq = +el.dataset.sq, pc = c.pos.b[sq];
+      if (PZ.sel != null && PZ.sel !== sq && pick(PZ.sel, sq)) return;
+      PZ.sel = pc && (pc === pc.toUpperCase()) === (c.pos.turn === 'w') && legalFrom(sq).length ? sq : null;
+      PZ.down = PZ.sel;
+      $$('#pz-board .sq').forEach(x => x.classList.remove('sel', 'tgt', 'tgtc'));
+      if (PZ.sel != null) { el.classList.add('sel'); legalFrom(sq).forEach(m => $(`#pz-board .sq[data-sq="${m.to}"]`).classList.add(c.pos.b[m.to] ? 'tgtc' : 'tgt')); }
+    };
+    // drag: let go on another square
+    bd.onpointerup = e => {
+      if (PZ.down == null) return;
+      const t = document.elementFromPoint(e.clientX, e.clientY), el = t && t.closest && t.closest('#pz-board .sq');
+      const from = PZ.down; PZ.down = null;
+      if (el && +el.dataset.sq !== from) pick(from, +el.dataset.sq);
+    };
+  }
+}
+function pzChange(patch) {
+  state.settings.puz = { ...pzSet(), ...patch };
+  touch('meta');
+  PZ.gen++; PZ.busy = false;
+  clearTimeout(PZ.timer);
+  PZ.queue = []; PZ.cur = null; PZ.err = '';
+  pzSaveQ();
+  pzNext();
+}
+function openPuzzles() {
+  trainMode = 'puzzle';
+  render();
+  if (!PZ.cur) { pzLoadQ(); pzNext(); } else pzRender();
+}
+
 // ---------- events ----------
 document.addEventListener('click', e => {
   const go = e.target.closest('[data-go]');
@@ -3984,7 +4254,7 @@ $('#g-go').addEventListener('click', () => runGameCheck());
 $('#bk-save').addEventListener('click', saveBackup);
 $('#bk-file').addEventListener('change', e => { if (e.target.files[0]) loadBackup(e.target.files[0]); e.target.value = ''; });
 $('#g-file').addEventListener('change', e => { const f = [...e.target.files]; $('#g-fname').textContent = f.length ? f.map(x => x.name).join(', ') : 'No file chosen'; });
-for (const [id, k] of [['#g-li', 'liUser'], ['#g-cc', 'ccUser']]) $(id).addEventListener('input', e => { state.settings[k] = e.target.value.trim(); touch('meta'); gameLinks(); });
+for (const [id, k] of [['#g-li', 'liUser'], ['#g-cc', 'ccUser']]) $(id).addEventListener('input', e => { state.settings[k] = e.target.value.trim(); touch('meta'); gameLinks(); if (!IN_CLAUDE) { clearTimeout(window.__gt); window.__gt = setTimeout(autoCheck, 1500); } });
 $('#imp-file').addEventListener('change', e => { $('#imp-fname').textContent = e.target.files[0] ? e.target.files[0].name : 'No file chosen'; });
 document.addEventListener('visibilitychange', () => { if (document.hidden) { flush(); if (!IN_CLAUDE) gsSync(); } else if (!IN_CLAUDE) gsSoon(300); });
 
