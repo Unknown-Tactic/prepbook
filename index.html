@@ -424,6 +424,43 @@ a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
 .gs-row input { flex: 1 1 220px; min-width: 0; font-family: var(--f-mono); }
 .gs-msg { font-size: 14px; margin-top: 8px; }
 .gs-msg textarea { width: 100%; margin-top: 6px; font-size: 12px; }
+.gf { display: flex; flex-direction: column; gap: 6px; }
+.gf .lbl { margin-top: 8px; }
+.gf .cap { margin: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 7px 12px; font-weight: 500; font-size: 14px; color: var(--muted); }
+.chip[aria-pressed="true"] { background: var(--good); border-color: var(--good); color: var(--surface); font-weight: 600; }
+.chk { display: inline-flex; gap: 8px; align-items: center; font-size: 14px; margin-top: 8px; }
+.chk input { width: auto; }
+#g-filters { margin: 6px 0 4px; }
+.hline { margin: 14px 0 6px; }
+.hline .lbl { display: block; }
+.h-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 14px; }
+.whys { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.whyc { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 4px 14px 12px; }
+.whyc .h3 { margin: 12px 0 8px; font-size: 15px; }
+.why { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(50px, 1fr) 40px 28px; gap: 8px; align-items: center; font-size: 13px; padding: 3px 0; }
+.why b { text-align: right; font-variant-numeric: tabular-nums; } .why .cap { margin: 0; text-align: right; }
+.wbar { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.wbar i { display: block; height: 100%; border-radius: 99px; }
+.wbar i.l { background: var(--bad); } .wbar i.w { background: var(--good); } .wbar i.d { background: var(--muted); }
+.bws { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.bws > div { display: flex; flex-direction: column; gap: 8px; }
+.bws .lbl { margin: 0; }
+.bw { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--good); border-radius: 10px; padding: 10px 12px; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
+.bw.worst { border-left-color: var(--bad); }
+.bw .cap { margin: 0; }
+.htab td { vertical-align: middle; padding: 8px 10px; }
+.htab tr[data-hline] { cursor: pointer; }
+.htab tr[data-hline]:hover td { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.htab .wdl { min-width: 90px; }
+.htab .op { margin: 2px 0 0; font-size: 12px; }
+.htab th .cap { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.pre { color: var(--muted); }
+.htab td:first-child .mono, .bw-l .mono { white-space: nowrap; }
+#v-history .panel, #v-history .hline { max-width: 760px; }
+#h-more { margin-top: 10px; }
+.notice.warn p, p.notice.warn { margin: 10px 0; }
 .gs-st { display: flex; gap: 8px; align-items: baseline; font-size: 14px; margin: 6px 0; }
 .danger { margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--line); }
 .danger p { font-size: 14px; }
@@ -519,7 +556,7 @@ a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
     <section class="view" id="v-games" hidden>
       <h2 class="h">Game check</h2>
       <p class="cap">Compares your real games as <b id="g-side">White</b> with your studies and shows exactly where you, or your opponent, left your prep. Switch colour at the top to check your games with the other colour.</p>
-      <div class="notice">
+      <div class="notice" id="g-howto">
         <b>How to check your games</b>
         <ol class="steps">
           <li>Type your username below. A download link appears.</li>
@@ -535,6 +572,7 @@ a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
         <label class="lbl" for="g-cc">Chess.com username</label>
         <input id="g-cc" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. nathant">
         <div id="g-cc-links" class="links"></div>
+        <div id="g-filters" hidden></div>
         <button class="primary" id="g-fetch" type="button" hidden>Fetch my games and compare</button>
         <div id="g-dl-help"><span class="lbl">Games file</span></div>
         <label class="filebtn"><input type="file" id="g-file" multiple accept=".pgn,.txt,text/plain,application/x-chess-pgn,application/vnd.chess-pgn"><span class="ghostbtn">Choose games file</span><span id="g-fname">No file chosen</span></label>
@@ -544,6 +582,14 @@ a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
         <div id="g-msg" aria-live="polite"></div>
       </div>
       <div id="g-report"></div>
+    </section>
+
+    <section class="view" id="v-history" hidden>
+      <h2 class="h">Game history analysis</h2>
+      <p class="cap">Reads your Lichess games and shows how they ended: how you lost, how you won, and which variations go best and worst for you. Add an opening to zoom into one line.</p>
+      <div class="panel" id="h-filters"></div>
+      <p id="h-status" class="cap" aria-live="polite"></p>
+      <div id="h-out"></div>
     </section>
 
     <section class="view" id="v-progress" hidden>
@@ -572,6 +618,7 @@ a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
     <button type="button" data-v="map"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="18" cy="5" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="18" cy="19" r="2"/><path d="M7 12h9M7 11.5C11 11 12 5 16 5M7 12.5c4 .5 5 6.5 9 6.5"/></svg>Map</button>
     <button type="button" data-v="library"><svg viewBox="0 0 24 24"><path d="M5 4h4v16H5zM10 4h4v16h-4zM15.5 4.5l3.8 1-3.9 14.6-3.8-1z"/></svg>Library</button>
     <button type="button" data-v="games"><svg viewBox="0 0 24 24"><path d="M9 4h6M10 4v3.5L6.5 15a3 3 0 0 0 2.7 4.5h5.6a3 3 0 0 0 2.7-4.5L14 7.5V4"/><path d="M8.5 13h7"/></svg>Games</button>
+    <button type="button" data-v="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg>History</button>
     <button type="button" data-v="progress"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>Progress</button>
   </nav>
 </div>
@@ -1684,7 +1731,7 @@ function showComment(e) {
 let view = 'train', trainMode = 'home';
 function showView(v) {
   view = v;
-  $('#app').classList.toggle('wide', v === 'map');
+  $('#app').classList.toggle('wide', v === 'map' || v === 'history');
   if (v !== 'map' && typeof mapUI !== 'undefined') { if (mapUI.fs) setFull(false); engPause(); }
   $$('.view').forEach(x => { x.hidden = x.id !== 'v-' + v; });
   $$('.tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.v === v ? 'page' : 'false'));
@@ -1698,6 +1745,7 @@ function render() {
   if (view === 'library') renderLibrary();
   if (view === 'progress') { renderProgress(); showLastBackup(); gsRender(); }
   if (view === 'games') renderGames();
+  if (view === 'history') renderHistory();
   if (view === 'map') {
     syncCard();
     const k = [state.settings.side, mapKeySet(), mapUI.root.join(' '), repVersion, Li.token ? 1 : 0].join('|');
@@ -2112,6 +2160,9 @@ function gameLinks() {
   $('#g-side').textContent = col;
   $('#g-fetch').hidden = IN_CLAUDE || (!li && !cc);
   $('#g-dl-help').hidden = !IN_CLAUDE;
+  $('#g-howto').hidden = !IN_CLAUDE;
+  if (!IN_CLAUDE) { $('#g-li-links').innerHTML = ''; $('#g-cc-links').innerHTML = ''; }
+  renderGameFilters();
 }
 function renderGames() {
   if (document.activeElement !== $('#g-li')) $('#g-li').value = state.settings.liUser || '';
@@ -3331,37 +3382,6 @@ function branchCards(sans) {
   return [...out];
 }
 
-// ---------- fetch games straight from Lichess and Chess.com (outside Claude) ----------
-async function fetchGamesDirect() {
-  const msg = $('#g-msg'), side = state.settings.side, li = (state.settings.liUser || '').trim(), cc = (state.settings.ccUser || '').trim().toLowerCase();
-  if (!li && !cc) { msg.innerHTML = '<span class="bad">Type your Lichess or Chess.com username first.</span>'; return; }
-  let text = '', notes = [];
-  if (li) {
-    msg.textContent = 'Fetching your Lichess games…';
-    try {
-      const r = await fetch(`${LI}/api/games/user/${encodeURIComponent(li)}?max=200&color=${side === 'w' ? 'white' : 'black'}&moves=true&tags=true&clocks=false&evals=false&opening=false`,
-        { headers: { Accept: 'application/x-chess-pgn', ...(Li.token ? { Authorization: 'Bearer ' + Li.token } : {}) } });
-      if (r.status === 404) notes.push(`No Lichess player called “${li}”.`);
-      else if (!r.ok) notes.push('Lichess didn’t send the games (try again in a minute).');
-      else text += await r.text() + '\n\n';
-    } catch (e) { notes.push('Couldn’t reach Lichess.'); }
-  }
-  if (cc) {
-    msg.textContent = 'Fetching your Chess.com games…';
-    try {
-      const r = await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(cc)}/games/archives`);
-      if (r.status === 404) notes.push(`No Chess.com player called “${cc}”.`);
-      else {
-        const arch = ((await r.json()).archives || []).slice(-3);
-        for (const a of arch) { const g = await fetch(a + '/pgn'); if (g.ok) text += await g.text() + '\n\n'; }
-      }
-    } catch (e) { notes.push('Couldn’t reach Chess.com.'); }
-  }
-  if (!text.trim()) { msg.innerHTML = `<span class="bad">${esc(notes.join(' ') || 'No games found.')}</span>`; return; }
-  await runGameCheck(text);
-  if (notes.length) msg.innerHTML += ` <span class="cap">${esc(notes.join(' '))}</span>`;
-}
-
 // ---------- sync across devices through a private GitHub gist (GitHub copy only) ----------
 // Everything (studies, progress, settings) is kept in one private gist file, prepbook.json.
 const GS = { key: 'prepbook.gist', file: 'prepbook.json', timer: 0, busy: false, again: false, err: '', msg: '' };
@@ -3542,6 +3562,374 @@ function gsFromLink() {
   return true;
 }
 
+// ---------- your Lichess games: downloaded once, kept on this device, filtered here ----------
+const SPEEDS = [['bullet', 'Bullet'], ['blitz', 'Blitz'], ['rapid', 'Rapid'], ['classical', 'Classical'], ['correspondence', 'Correspondence']];
+const PERIODS = [['week', 'Last week', 7], ['month', 'Last month', 31], ['3m', '3 months', 92], ['year', 'Last year', 366], ['all', 'All time', 0]];
+function gfSet() {
+  const g = state.settings.gf || {};
+  return { speeds: g.speeds || ['blitz', 'rapid', 'classical'], period: g.period || '3m', rated: !!g.rated, color: g.color || 'both', line: g.line || '', depth: g.depth || 2, sort: g.sort || 'games' };
+}
+function gfPut(patch) { state.settings.gf = { ...gfSet(), ...patch }; touch('meta'); }
+const periodStart = p => { const d = (PERIODS.find(x => x[0] === p) || PERIODS[2])[2]; return d ? Date.now() - d * DAY : 0; };
+const periodName = p => (PERIODS.find(x => x[0] === p) || PERIODS[2])[1].toLowerCase();
+
+// a small database in the browser (IndexedDB) so games don't need downloading every time
+let gdbP = null;
+function gdbOpen() {
+  if (!gdbP) gdbP = new Promise(res => {
+    try { const r = indexedDB.open('prepbook', 1); r.onupgradeneeded = () => r.result.createObjectStore('games'); r.onsuccess = () => res(r.result); r.onerror = () => res(null); }
+    catch (e) { res(null); }
+  });
+  return gdbP;
+}
+async function gdbGet(k) {
+  const db = await gdbOpen();
+  if (!db) return null;
+  return new Promise(res => { try { const t = db.transaction('games').objectStore('games').get(k); t.onsuccess = () => res(t.result || null); t.onerror = () => res(null); } catch (e) { res(null); } });
+}
+async function gdbPut(k, v) {
+  const db = await gdbOpen();
+  if (!db) return;
+  return new Promise(res => { try { const t = db.transaction('games', 'readwrite'); t.objectStore('games').put(v, k); t.oncomplete = () => res(); t.onerror = () => res(); } catch (e) { res(); } });
+}
+// reads Lichess's game stream one game at a time
+async function liStream(user, params, onGame, stopped) {
+  const q = new URLSearchParams({ moves: 'true', opening: 'true', clocks: 'false', evals: 'false', finished: 'true', perfType: 'ultraBullet,bullet,blitz,rapid,classical,correspondence' });
+  for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
+  let r;
+  try { r = await fetch(`${LI}/api/games/user/${encodeURIComponent(user)}?${q}`, { headers: { Accept: 'application/x-ndjson', ...(Li.token ? { Authorization: 'Bearer ' + Li.token } : {}) } }); }
+  catch (e) { throw Object.assign(new Error('net'), { code: 'net' }); }
+  if (r.status === 404) throw Object.assign(new Error('nouser'), { code: 'nouser' });
+  if (r.status === 429) throw Object.assign(new Error('rate'), { code: 'rate' });
+  if (!r.ok) throw Object.assign(new Error('http'), { code: 'http' });
+  const rd = r.body.getReader(), dec = new TextDecoder();
+  let buf = '';
+  const line = l => { l = l.trim(); if (l) { try { onGame(JSON.parse(l)); } catch (e) { /* skip a broken line */ } } };
+  for (;;) {
+    if (stopped()) { try { await rd.cancel(); } catch (e) { /* closed */ } break; }
+    const { value, done } = await rd.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i;
+    while ((i = buf.indexOf('\n')) >= 0) { line(buf.slice(0, i)); buf = buf.slice(i + 1); }
+  }
+  line(buf);
+}
+function slimGame(g, uid) {
+  if (g.variant && g.variant !== 'standard') return null;
+  if (['aborted', 'noStart', 'created', 'started', 'unknownFinish'].includes(g.status)) return null;
+  const W = g.players.white, B = g.players.black;
+  const me = W.user && W.user.id === uid ? 'w' : B.user && B.user.id === uid ? 'b' : null;
+  if (!me) return null;
+  const opp = me === 'w' ? B : W, mine = me === 'w' ? W : B, moves = (g.moves || '').split(' ').filter(Boolean);
+  return { id: g.id, at: g.createdAt, sp: g.speed, r: !!g.rated, me, res: !g.winner ? 'd' : (g.winner === 'white') === (me === 'w') ? 'w' : 'l', st: g.status,
+    m: moves.slice(0, 60), n: moves.length, o: g.opening ? g.opening.name : '', e: g.opening ? g.opening.eco : '',
+    op: opp.user ? opp.user.name : opp.aiLevel ? 'Stockfish level ' + opp.aiLevel : 'Anonymous', or: opp.rating || 0, mr: mine.rating || 0 };
+}
+const LG = { uid: '', games: [], from: 0, busy: false, stop: false, count: 0 };
+// makes sure games back to `since` are on this device, then fetches anything newer
+async function loadGames(user, since, onProgress) {
+  const uid = user.trim().toLowerCase();
+  if (!uid) throw Object.assign(new Error('nouser'), { code: 'nouser' });
+  const rec = (await gdbGet('u:' + uid)) || { from: Date.now(), to: 0, games: [] };
+  const ids = new Set(rec.games.map(g => g.id)), add = [];
+  let oldest = Infinity;
+  LG.busy = true; LG.stop = false; LG.count = 0;
+  const take = g => {
+    LG.count++;
+    if (g.createdAt) oldest = Math.min(oldest, g.createdAt);
+    const s = slimGame(g, uid);
+    if (s && !ids.has(s.id)) { ids.add(s.id); add.push(s); }
+    if (LG.count % 25 === 0 && onProgress) onProgress();
+  };
+  try {
+    if (rec.to) await liStream(user, { since: String(rec.to + 1) }, take, () => LG.stop);
+    if (since < rec.from && !LG.stop) {
+      oldest = Infinity;
+      await liStream(user, { since: since ? String(since) : '', until: String(rec.from - 1) }, take, () => LG.stop);
+      rec.from = LG.stop && oldest < Infinity ? oldest : since;
+    }
+  } finally {
+    LG.busy = false;
+    if (add.length || rec.from !== LG.from) {
+      rec.games = add.concat(rec.games).sort((a, b) => b.at - a.at);
+      rec.to = Math.max(rec.to, ...rec.games.slice(0, 1).map(g => g.at));
+      await gdbPut('u:' + uid, rec);
+    }
+    LG.uid = uid; LG.games = rec.games; LG.from = rec.from;
+  }
+  return add.length;
+}
+async function cachedGames(user) {
+  const uid = (user || '').trim().toLowerCase();
+  if (!uid) return false;
+  if (LG.uid === uid) return true;
+  const rec = await gdbGet('u:' + uid);
+  if (!rec) return false;
+  LG.uid = uid; LG.games = rec.games; LG.from = rec.from;
+  return true;
+}
+function pickGames(f, color) {
+  const t0 = periodStart(f.period);
+  return LG.games.filter(g => g.at >= t0 && (f.speeds.includes(g.sp) || (g.sp === 'ultraBullet' && f.speeds.includes('bullet'))) && (!f.rated || g.r) && (color === 'both' || g.me === color));
+}
+// turns saved games back into PGN for Game check
+function gamesPgn(list) {
+  return list.map(g => {
+    const d = new Date(g.at), date = `${d.getUTCFullYear()}.${String(d.getUTCMonth() + 1).padStart(2, '0')}.${String(d.getUTCDate()).padStart(2, '0')}`;
+    const res = g.res === 'd' ? '1/2-1/2' : (g.res === 'w') === (g.me === 'w') ? '1-0' : '0-1';
+    const me = state.settings.liUser || 'me', W = g.me === 'w' ? me : g.op, B = g.me === 'w' ? g.op : me;
+    let mv = '';
+    g.m.forEach((s, i) => { mv += (i % 2 ? '' : (i / 2 + 1) + '. ') + s + ' '; });
+    return `[Event "Lichess ${g.sp}"]\n[Site "https://lichess.org/${g.id}"]\n[Date "${date}"]\n[White "${W}"]\n[Black "${B}"]\n[Result "${res}"]\n\n${mv}${res}`;
+  }).join('\n\n');
+}
+// Chess.com: monthly archives, filtered the same way
+async function ccGames(user, side, f) {
+  const t0 = periodStart(f.period), want = f.speeds.map(s => s === 'correspondence' ? 'daily' : s);
+  const r = await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(user)}/games/archives`);
+  if (r.status === 404) throw Object.assign(new Error('nouser'), { code: 'nouser' });
+  const arch = ((await r.json()).archives || []).filter(u => { const m = u.match(/(\d{4})\/(\d{2})$/); return m && new Date(+m[1], +m[2], 1).getTime() >= t0; }).slice(-36);
+  let out = '', n = 0;
+  for (const a of arch.reverse()) {
+    const j = await (await fetch(a)).json();
+    for (const g of j.games || []) {
+      if (g.rules !== 'chess' || g.end_time * 1000 < t0 || !want.includes(g.time_class) || (f.rated && !g.rated)) continue;
+      const mine = (side === 'w' ? g.white : g.black).username.toLowerCase();
+      if (mine !== user.toLowerCase() || !g.pgn) continue;
+      out += g.pgn + '\n\n'; n++;
+    }
+  }
+  return { text: out, n };
+}
+
+// ---------- the filter panel (Games and History tabs) ----------
+function gfHtml(kind) {
+  const f = gfSet();
+  const col = kind === 'h' ? seg('gfcol', [['w', 'White'], ['b', 'Black'], ['both', 'Both']], f.color) : seg('gfside', [['w', 'White'], ['b', 'Black']], state.settings.side);
+  return `<div class="gf">
+    ${kind === 'h' ? `<label class="lbl" for="h-user">Lichess username</label><input id="h-user" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. NathanT" value="${esc(state.settings.liUser || '')}">` : ''}
+    <span class="lbl">Colour</span>${col}
+    ${kind === 'g' ? '<p class="cap">Game check uses your studies for this colour (the same as switching colour at the top).</p>' : ''}
+    <span class="lbl">Time controls</span>
+    <div class="chips">${SPEEDS.map(([k, l]) => `<button type="button" class="chip" aria-pressed="${f.speeds.includes(k)}" data-speed="${k}">${l}</button>`).join('')}<button type="button" class="link" data-speed="all">All</button></div>
+    <span class="lbl">Period</span>${seg('gfper', PERIODS.map(p => [p[0], p[1]]), f.period)}
+    <label class="chk"><input type="checkbox" data-rated ${f.rated ? 'checked' : ''}> Rated games only</label>
+  </div>`;
+}
+function gfBind(root, after) {
+  if (root.dataset.gfb) return;
+  root.dataset.gfb = 1;
+  root.addEventListener('click', e => {
+    const sp = e.target.closest('[data-speed]');
+    if (sp) {
+      const f = gfSet(), k = sp.dataset.speed;
+      const speeds = k === 'all' ? SPEEDS.map(s => s[0]) : f.speeds.includes(k) ? f.speeds.filter(x => x !== k) : [...f.speeds, k];
+      gfPut({ speeds: speeds.length ? speeds : [k] }); after(); return;
+    }
+    const b = e.target.closest('.seg button');
+    if (!b || !root.contains(b)) return;
+    const set = b.closest('.seg').dataset.set;
+    if (set === 'gfcol') gfPut({ color: b.dataset.val });
+    else if (set === 'gfper') gfPut({ period: b.dataset.val });
+    else if (set === 'gfside') {
+      if (S || b.dataset.val === state.settings.side) return;
+      state.settings.side = b.dataset.val; state.settings.focus = ''; touch('meta'); rebuild(); render(); return;
+    } else return;
+    after();
+  });
+  root.addEventListener('change', e => { if (e.target.matches('[data-rated]')) { gfPut({ rated: e.target.checked }); after(); } });
+}
+
+// ---------- Games tab: fetch with filters, then Game check ----------
+async function fetchGamesDirect() {
+  const msg = $('#g-msg'), side = state.settings.side, f = gfSet();
+  const li = (state.settings.liUser || '').trim(), cc = (state.settings.ccUser || '').trim();
+  if (!li && !cc) { msg.innerHTML = '<span class="bad">Type your Lichess or Chess.com username first.</span>'; return; }
+  if (!f.speeds.length) { msg.innerHTML = '<span class="bad">Pick at least one time control.</span>'; return; }
+  let text = '', notes = [], nLi = 0, nCc = 0;
+  if (li) {
+    try {
+      await loadGames(li, periodStart(f.period), () => { msg.textContent = `Fetching your Lichess games… ${LG.count}`; });
+      const list = pickGames(f, side);
+      nLi = list.length;
+      text += gamesPgn(list) + '\n\n';
+    } catch (e) { notes.push(e.code === 'nouser' ? `No Lichess player called “${li}”.` : e.code === 'rate' ? 'Lichess is busy, try again in a minute.' : 'Couldn’t reach Lichess.'); }
+  }
+  if (cc) {
+    msg.textContent = 'Fetching your Chess.com games…';
+    try { const r = await ccGames(cc, side, f); text += r.text; nCc = r.n; }
+    catch (e) { notes.push(e.code === 'nouser' ? `No Chess.com player called “${cc}”.` : 'Couldn’t reach Chess.com.'); }
+  }
+  if (!text.trim() || nLi + nCc === 0) { msg.innerHTML = `<span class="bad">${esc(notes.join(' ') || `No ${sideName(side)} games found for those time controls in the ${periodName(f.period)}.`)}</span>`; return; }
+  await runGameCheck(text);
+  msg.innerHTML += ` <span class="cap">${[nLi ? nLi + ' Lichess' : '', nCc ? nCc + ' Chess.com' : ''].filter(Boolean).join(' + ')} games · ${periodName(f.period)}.${notes.length ? ' ' + esc(notes.join(' ')) : ''}</span>`;
+}
+function renderGameFilters() {
+  const box = $('#g-filters');
+  if (!box) return;
+  box.hidden = IN_CLAUDE;
+  if (IN_CLAUDE) return;
+  box.innerHTML = gfHtml('g');
+  gfBind(box, renderGameFilters);
+}
+
+// ---------- History tab: how your games went, branch by branch ----------
+const REASON = {
+  l: { mate: 'Checkmated', resign: 'Resigned', outoftime: 'Ran out of time', timeout: 'Left the game', cheat: 'Fair-play ban', other: 'Other' },
+  w: { mate: 'You checkmated', resign: 'Opponent resigned', outoftime: 'Opponent ran out of time', timeout: 'Opponent left', cheat: 'Opponent banned', other: 'Other' },
+  d: { draw: 'Agreed / repetition / 50 moves', stalemate: 'Stalemate', outoftime: 'Time out vs. lone king', insufficientMaterialClaim: 'Insufficient material', other: 'Other' }
+};
+const reasonOf = g => (REASON[g.res][g.st] ? g.st : 'other');
+function parseLineText(txt) {
+  const toks = String(txt || '').replace(/\d+\s*\.(\s*\.\.)?|…/g, ' ').split(/[\s,]+/).filter(Boolean);
+  let pos = Chess0.parse(Chess0.START);
+  const out = [];
+  for (const t of toks) { const mv = Chess0.fromSan(pos, t); if (!mv) return { line: out, bad: t }; out.push(mv.san); pos = mv.next; }
+  return { line: out };
+}
+const H = { loading: false, err: '', note: '', showAll: false };
+function statsOf(list) {
+  const s = { n: list.length, w: 0, d: 0, l: 0, why: { w: {}, d: {}, l: {} } };
+  for (const g of list) { s[g.res]++; const r = reasonOf(g); s.why[g.res][r] = (s.why[g.res][r] || 0) + 1; }
+  s.score = s.n ? (s.w + s.d / 2) / s.n : 0;
+  return s;
+}
+const p100 = (a, b) => b ? Math.round(100 * a / b) : 0;
+function lineHtml(sans, from) {
+  const { steps } = lineFromStart(sans);
+  const pre = steps.slice(0, from), post = steps.slice(from);
+  return `<span class="mono">${pre.length ? `<span class="pre">${esc(Core.fmtPath(pre))}</span> ` : ''}${post.length ? `<b>${esc(pre.length ? Core.fmtPath(post).replace(/^\d+…/, '') : Core.fmtPath(post))}</b>` : '<span class="cap">(game ended here)</span>'}</span>`;
+}
+const gameUrl = (g, ply) => `https://lichess.org/${g.id}${g.me === 'b' ? '/black' : ''}${ply ? '#' + ply : ''}`;
+function whyBars(s, res) {
+  const tot = s[res], rows = Object.entries(s.why[res]).sort((a, b) => b[1] - a[1]);
+  if (!tot) return '<p class="cap">None.</p>';
+  return rows.map(([k, n]) => `<div class="why"><span>${REASON[res][k]}</span><span class="wbar"><i class="${res}" style="width:${100 * n / tot}%"></i></span><b>${p100(n, tot)}%</b><span class="cap">${n}</span></div>`).join('');
+}
+function renderHistory() {
+  const box = $('#h-filters');
+  box.innerHTML = gfHtml('h') + `<div class="row tight"><button class="primary inline" id="h-load" type="button">${LG.uid ? 'Update my games' : 'Load my games'}</button>${H.loading ? '<button class="ghostbtn" id="h-stop" type="button">Stop</button>' : ''}</div>
+    <p class="cap">${Li.token ? 'Signed in to Lichess, so games download faster.' : 'Tip: signing in with Lichess (Map tab) makes downloads faster.'} Games are kept on this device, so next time only new games are fetched.</p>`;
+  gfBind(box, () => { renderHistory(); });
+  $('#h-user').oninput = e => { state.settings.liUser = e.target.value.trim(); touch('meta'); };
+  $('#h-load').onclick = historyLoad;
+  $('#h-stop') && ($('#h-stop').onclick = () => { LG.stop = true; });
+  const user = state.settings.liUser || '';
+  if (!H.loading && user && LG.uid !== user.toLowerCase()) cachedGames(user).then(ok => { if (ok && view === 'history') historyResults(); });
+  historyResults();
+}
+async function historyLoad() {
+  const user = (state.settings.liUser || '').trim();
+  if (!user) { H.err = 'Type your Lichess username first.'; historyResults(); return; }
+  H.loading = true; H.err = '';
+  renderHistory();
+  try {
+    const n = await loadGames(user, periodStart(gfSet().period), () => { $('#h-status').textContent = `Downloading your games from Lichess… ${LG.count} so far`; });
+    H.note = n ? `${n} new game${n === 1 ? '' : 's'} downloaded.` : 'Up to date.';
+  } catch (e) {
+    H.err = e.code === 'nouser' ? `There’s no Lichess player called “${user}”.` : e.code === 'rate' ? 'Lichess is busy. Try again in a minute.' : 'Couldn’t reach Lichess. Check your connection and try again.';
+  }
+  H.loading = false;
+  if (view === 'history') renderHistory();
+}
+function historyResults() {
+  const out = $('#h-out'), st = $('#h-status');
+  if (!out) return;
+  const f = gfSet(), user = state.settings.liUser || '';
+  st.innerHTML = H.loading ? `Downloading your games from Lichess… ${LG.count} so far` : H.err ? `<span class="bad">${esc(H.err)}</span>` : H.note ? esc(H.note) : '';
+  if (!LG.uid || LG.uid !== user.toLowerCase()) { out.innerHTML = H.loading ? '' : '<p class="cap">Type your Lichess username, choose the games you want, and press <b>Load my games</b>.</p>'; return; }
+  const t0 = periodStart(f.period);
+  const partial = t0 < LG.from ? `<p class="notice warn">Only games since <b>${new Date(LG.from).toLocaleDateString()}</b> are downloaded. Press <b>Update my games</b> to fetch the rest of the ${periodName(f.period)}.</p>` : '';
+  const all = pickGames(f, f.color);
+  const pl = parseLineText(f.line), L = pl.line.length;
+  const games = all.filter(g => pl.line.every((s, i) => g.m[i] && strip(g.m[i]) === strip(s)));
+  const col = f.color === 'both' ? 'White and Black' : sideName(f.color);
+  const filterRow = `<div class="hline">
+      <label class="lbl" for="h-line">Opening (optional)</label>
+      <div class="gs-row"><input id="h-line" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. 1.Nf3 or 1.e4 c5 2.Nf3" value="${esc(f.line)}"><button class="ghostbtn" id="h-line-go" type="button">Apply</button>${f.line ? '<button class="ghostbtn" id="h-line-x" type="button">Clear</button>' : ''}</div>
+      ${pl.bad ? `<p class="cap bad">“${esc(pl.bad)}” isn’t a legal move there. Showing games after ${L ? esc(Core.fmtPath(lineFromStart(pl.line).steps)) : 'the start'}.</p>` : ''}
+      <span class="lbl">Split into branches by</span>${seg('hdepth', [['1', 'Next move'], ['2', 'Next 2 moves'], ['4', 'Next 4'], ['6', 'Next 6'], ['name', 'Opening name']], String(f.depth))}
+    </div>`;
+  if (!games.length) {
+    out.innerHTML = partial + filterRow + `<p class="cap">No ${col} games match these choices (${all.length} games before the opening filter).</p>`;
+    bindHistoryOut(); return;
+  }
+  const s = statsOf(games);
+  // branches
+  const D = f.depth === 'name' ? 0 : +f.depth;
+  const groups = new Map();
+  for (const g of games) {
+    const key = D ? (f.color === 'both' ? g.me : '') + '|' + g.m.slice(0, L + D).join(' ') : (f.color === 'both' ? g.me : '') + '|' + (g.o || 'Unknown opening');
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(g);
+  }
+  let rows = [...groups.entries()].map(([key, list]) => {
+    const st2 = statsOf(list), last = list[0], lastLoss = list.find(g => g.res === 'l');
+    const line = D ? key.split('|')[1].split(' ').filter(Boolean) : null;
+    return { key, list, s: st2, line, name: D ? (list[0].o || '') : key.split('|')[1], me: list[0].me, ex: lastLoss || last, exLoss: !!lastLoss };
+  });
+  const sorters = { games: (a, b) => b.s.n - a.s.n, best: (a, b) => b.s.score - a.s.score || b.s.n - a.s.n, worst: (a, b) => a.s.score - b.s.score || b.s.n - a.s.n };
+  rows.sort(sorters[f.sort] || sorters.games);
+  const minN = Math.max(2, Math.ceil(games.length * 0.03));
+  const ranked = rows.filter(r => r.s.n >= minN);
+  const best = ranked.slice().sort(sorters.best).slice(0, 3), worst = ranked.slice().sort(sorters.worst).filter(r => !best.includes(r)).slice(0, 3);
+  const exPly = r => D ? Math.min(r.line.length, L + D) : (r.ex.m.length ? Math.min(r.ex.m.length, 12) : 0);
+  const rowLabel = r => (f.color === 'both' ? `<i class="sw ${r.me}"></i> ` : '') + (D ? lineHtml(r.line, L) : `<b>${esc(r.name)}</b>`);
+  const lossMix = s2 => s2.l ? ['mate', 'resign', 'outoftime'].map(k => `${p100(s2.why.l[k] || 0, s2.l)}%`).join(' · ') : '–';
+  const topWhy = s2 => { const e = Object.entries(s2.why.l).sort((a, b) => b[1] - a[1])[0]; return e ? `${REASON.l[e[0]].toLowerCase()} (${p100(e[1], s2.l)}% of losses)` : ''; };
+  const card = (r, kind) => `<div class="bw ${kind}"><div class="bw-l">${rowLabel(r)}${D && r.name ? `<div class="cap">${esc(r.name)}</div>` : ''}</div>
+    <div class="bw-s"><b class="${kind === 'best' ? 'good' : 'bad'}">${Math.round(r.s.score * 100)}%</b> score in ${r.s.n} games · won ${p100(r.s.w, r.s.n)}%, lost ${p100(r.s.l, r.s.n)}%${kind === 'worst' && r.s.l ? ` · mostly ${esc(topWhy(r.s))}` : ''}</div>
+    <a class="dl" href="${gameUrl(r.ex, exPly(r))}" target="_blank" rel="noopener">${r.exLoss ? 'See a loss in this line' : 'See a game in this line'} ↗</a></div>`;
+  const shown = H.showAll ? rows : rows.slice(0, 25);
+  out.innerHTML = partial + filterRow + `
+    <div class="tiles h-tiles">
+      <div class="tile"><div class="n">${s.n}</div><div class="l">Games</div></div>
+      <div class="tile"><div class="n good">${p100(s.w, s.n)}%</div><div class="l">Won (${s.w})</div></div>
+      <div class="tile"><div class="n">${p100(s.d, s.n)}%</div><div class="l">Drawn (${s.d})</div></div>
+      <div class="tile"><div class="n bad">${p100(s.l, s.n)}%</div><div class="l">Lost (${s.l})</div></div>
+    </div>
+    <p class="cap">${col} · ${f.speeds.map(k => SPEEDS.find(x => x[0] === k)[1]).join(', ')} · ${periodName(f.period)}${f.rated ? ' · rated only' : ''}${L ? ` · after <b class="mono">${esc(Core.fmtPath(lineFromStart(pl.line).steps))}</b>` : ''} · your score <b>${Math.round(s.score * 100)}%</b></p>
+    <div class="whys">
+      <div class="whyc"><h3 class="h3">How you lost</h3>${whyBars(s, 'l')}</div>
+      <div class="whyc"><h3 class="h3">How you won</h3>${whyBars(s, 'w')}</div>
+      ${s.d ? `<div class="whyc"><h3 class="h3">How games were drawn</h3>${whyBars(s, 'd')}</div>` : ''}
+    </div>
+    ${ranked.length >= 2 ? `<h3 class="h3">Your best and worst variations</h3><p class="cap">Branches with at least ${minN} games. Each link opens one game at the point where the branch starts${rows.some(r => r.exLoss) ? ', showing a loss where there is one' : ''}.</p>
+      <div class="bws"><div><span class="lbl good">Best</span>${best.map(r => card(r, 'best')).join('')}</div><div><span class="lbl bad">Worst</span>${worst.map(r => card(r, 'worst')).join('') || '<p class="cap">Not enough games yet.</p>'}</div></div>` : ''}
+    <h3 class="h3">Every branch</h3>
+    <p class="cap">${D ? `Grouped by the next ${D === 1 ? 'move' : D + ' moves (each side’s move counts as one)'}${L ? ' after your opening' : ''}. Tap a line to go one branch deeper.` : 'Grouped by Lichess’s opening name.'} “Lost by” shows how the losses in that branch ended: checkmated · resigned · ran out of time.</p>
+    <div class="row tight">${seg('hsort', [['games', 'Most played'], ['best', 'Best first'], ['worst', 'Worst first']], f.sort)}</div>
+    <div class="table"><table class="htab"><thead><tr><th>Branch</th><th class="num">Games</th><th class="num">Score</th><th>Win · Draw · Loss</th><th class="num">Lost by<br><span class="cap">mate · resign · time</span></th><th></th></tr></thead><tbody>
+    ${shown.map(r => `<tr${D && r.line.length > L ? ` data-hline="${esc(r.line.join(' '))}" tabindex="0"` : ''}><td>${rowLabel(r)}${D && r.name ? `<div class="cap op">${esc(r.name)}</div>` : ''}</td><td class="num">${r.s.n}</td>
+      <td class="num"><b class="${r.s.score >= 0.55 ? 'good' : r.s.score <= 0.45 ? 'bad' : ''}">${Math.round(r.s.score * 100)}%</b></td>
+      <td><div class="wdl" title="Won ${p100(r.s.w, r.s.n)}% · drew ${p100(r.s.d, r.s.n)}% · lost ${p100(r.s.l, r.s.n)}%"><i class="win" style="width:${p100(r.s.w, r.s.n)}%"></i><i class="d" style="width:${p100(r.s.d, r.s.n)}%"></i><i class="loss" style="width:${p100(r.s.l, r.s.n)}%"></i></div><span class="cap">${r.s.w}–${r.s.d}–${r.s.l}</span></td>
+      <td class="num cap">${lossMix(r.s)}</td>
+      <td><a class="dl" href="${gameUrl(r.ex, exPly(r))}" target="_blank" rel="noopener" title="${r.exLoss ? 'Your most recent loss in this line' : 'Your most recent game in this line'}">${r.exLoss ? 'Loss' : 'Game'} ↗</a></td></tr>`).join('')}
+    </tbody></table></div>
+    ${rows.length > 25 && !H.showAll ? `<button class="link" id="h-more" type="button">Show all ${rows.length} branches</button>` : ''}`;
+  bindHistoryOut();
+}
+function bindHistoryOut() {
+  const out = $('#h-out');
+  const setLine = v => { gfPut({ line: v }); H.showAll = false; historyResults(); };
+  $('#h-line-go') && ($('#h-line-go').onclick = () => setLine($('#h-line').value.trim()));
+  $('#h-line') && ($('#h-line').onkeydown = e => { if (e.key === 'Enter') setLine(e.target.value.trim()); });
+  $('#h-line-x') && ($('#h-line-x').onclick = () => setLine(''));
+  $('#h-more') && ($('#h-more').onclick = () => { H.showAll = true; historyResults(); });
+  $$('.seg', out).forEach(g => g.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (g.dataset.set === 'hdepth') gfPut({ depth: b.dataset.val === 'name' ? 'name' : +b.dataset.val });
+    if (g.dataset.set === 'hsort') gfPut({ sort: b.dataset.val });
+    historyResults();
+  });
+  $$('tr[data-hline]', out).forEach(tr => {
+    const go = e => { if (e.target.closest('a')) return; setLine(Core.fmtPath(lineFromStart(tr.dataset.hline.split(' ')).steps)); window.scrollTo({ top: $('#h-out').offsetTop - 10, behavior: 'smooth' }); };
+    tr.onclick = go;
+    tr.onkeydown = e => { if (e.key === 'Enter') go(e); };
+  });
+}
+
 // ---------- events ----------
 document.addEventListener('click', e => {
   const go = e.target.closest('[data-go]');
@@ -3606,6 +3994,7 @@ showView('train');
 setSyncLabel('device');
 board.set(Chess0.parse(Chess0.START).b, {});
 initSync();
+if (IN_CLAUDE) $('.tabs button[data-v="history"]').hidden = true;
 if (!IN_CLAUDE) { if (!gsFromLink()) gsSoon(200); setInterval(() => { if (!document.hidden) gsSoon(100); }, 90000); }
 $('#g-fetch').addEventListener('click', fetchGamesDirect);
 if (!IN_CLAUDE) {
