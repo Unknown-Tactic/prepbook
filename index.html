@@ -249,6 +249,15 @@ td a { color: var(--accent); }
 .mp-treebox { position: relative; margin-top: 12px; }
 .mp-tree { overflow: auto; height: 62vh; min-height: 340px; background: color-mix(in srgb, var(--ink) 3%, var(--surface)); border: 1px solid var(--line); border-radius: 12px; -webkit-overflow-scrolling: touch; }
 .mp-tree:empty { height: 120px; min-height: 0; }
+.vbar { position: absolute; left: 10px; top: 10px; z-index: 2; }
+.vbar .seg { flex-wrap: nowrap; gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+.vbar .seg button { border: 0; border-radius: 0; padding: 6px 12px; font-size: 13px; min-width: 0; flex: 0 0 auto; }
+.vbar .seg button + button { border-left: 1px solid var(--line); }
+.vbar .seg button[aria-checked="true"] { background: var(--ink); color: var(--bg); }
+.mp-treebox.fs .vbar { left: 20px; top: calc(env(safe-area-inset-top, 0px) + 20px); }
+.tree g.me.off rect.pill { fill: var(--surface); stroke: var(--good); stroke-dasharray: 4 3; }
+.tree g.me.off text.lb { fill: var(--ink); }
+.tree .e.path { stroke: color-mix(in srgb, var(--good) 75%, var(--line)); stroke-dasharray: none; }
 .tbar { position: absolute; right: 10px; bottom: 10px; display: flex; align-items: center; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 4px; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
 .tbar .ghostbtn.sm { padding: 5px 9px; border: 0; }
 #mz-val { min-width: 42px; text-align: center; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted); }
@@ -277,6 +286,7 @@ html.noscroll, html.noscroll body { overflow: hidden; }
 .tree text.on { fill: var(--muted); font: 600 11px var(--f-body); }
 .tree text.sh { fill: var(--muted); font: 500 12px var(--f-body); }
 .tree text.sh.g { fill: var(--ink); }
+.tree text.sh.sm { font-size: 11px; }
 .tree circle.qb { fill: var(--warn); }
 .tree text.qt { fill: #fff; font: 800 12px var(--f-body); }
 .gapbtn { display: flex; flex-direction: column; gap: 2px; text-align: left; cursor: pointer; font: inherit; color: inherit; }
@@ -460,6 +470,7 @@ a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
             <p id="mp-legend" class="legend" hidden><span><i class="lg me"></i>Your move</span><span><i class="lg rep"></i>Prepared reply</span><span><i class="lg gap"></i>Gap: common reply not prepared</span><span><i class="lg weak"></i>Weak point</span><span><i class="lg strong"></i>Strong point</span><span class="cap">Thicker line = more common</span></p>
             <div id="mp-treebox" class="mp-treebox">
               <div id="mp-tree" class="mp-tree"></div>
+              <div class="vbar" id="mp-view" hidden></div>
               <div class="tbar" id="mp-tbar" hidden><button class="ghostbtn sm" id="mz-out" type="button" aria-label="Zoom out">−</button><span id="mz-val" class="mono">100%</span><button class="ghostbtn sm" id="mz-in" type="button" aria-label="Zoom in">+</button><button class="ghostbtn sm" id="mz-fit" type="button" title="Fit the width">Fit</button><button class="ghostbtn sm" id="mz-fs" type="button">⤢ Full screen</button></div>
             </div>
           </div>
@@ -2293,9 +2304,9 @@ function exSave() {
 const RATING_SETS = { low: '0,1000,1200,1400', mid: '1600,1800', high: '2000,2200,2500', all: '1000,1200,1400,1600,1800,2000,2200,2500' };
 function mapSet() {
   const m = state.settings.map || (state.settings.map = {});
-  return { db: m.db || 'masters', depth: m.depth || 6, thr: m.thr ?? 5, rating: m.rating || 'mid', study: m.study || '', zoom: m.zoom ?? 'fit', card: m.card || '', sections: m.sections || [], board: m.board || 380, engine: !!m.engine };
+  return { db: m.db || 'masters', depth: m.depth || 6, thr: m.thr ?? 5, rating: m.rating || 'mid', study: m.study || '', zoom: m.zoom ?? 'fit', zoomP: m.zoomP ?? 1, card: m.card || '', sections: m.sections || [], board: m.board || 380, engine: !!m.engine, view: m.view || 'path' };
 }
-function mapKeySet() { const { zoom, board, sections, card, engine, ...rest } = mapSet(); return JSON.stringify(rest); }
+function mapKeySet() { const { zoom, zoomP, board, sections, card, engine, view, ...rest } = mapSet(); return JSON.stringify(rest); }
 function exUrl(fen) {
   const m = mapSet(), f = encodeURIComponent(fen);
   return m.db === 'masters' ? `${EX}/masters?fen=${f}&moves=15&topGames=0`
@@ -2691,11 +2702,12 @@ function summaryHtml(root) {
 // ---------- zoom ----------
 const ZMIN = 0.25, ZMAX = 2;
 function fitZoom() { const box = $('#mp-tree'); return Math.max(0.55, Math.min(1, ((box && box.clientWidth) || 600) / (mapUI.W || 1))); }
-function curZoom() { const z = mapSet().zoom; return typeof z === 'number' ? z : fitZoom(); }
+const zoomKey = () => pathMode() ? 'zoomP' : 'zoom';
+function curZoom() { const z = mapSet()[zoomKey()]; return typeof z === 'number' ? z : fitZoom(); }
 function setZoom(z, save, ax, ay) {
   const box = $('#mp-tree'), svg = box && box.querySelector('svg.tree');
   z = Math.max(ZMIN, Math.min(ZMAX, z));
-  if (save) state.settings.map = { ...state.settings.map, zoom: z === 'fit' ? 'fit' : Math.round(z * 100) / 100 };
+  if (save) state.settings.map = { ...state.settings.map, [zoomKey()]: Math.round(z * 100) / 100 };
   if (!svg) return;
   const old = mapUI.z || 1;
   ax = ax ?? box.clientWidth / 2; ay = ay ?? box.clientHeight / 2;
@@ -2759,33 +2771,39 @@ function layoutTree(root) {
   })(root, 0, root.on || '');
   return { nodes, rows: Math.max(1, leaf) };
 }
-function treeSvg(root) {
+function treeSvg(root, wide) {
   const { nodes, rows } = layoutTree(root);
-  const COL = 132, ROW = 46, PAD = 30, maxD = Math.max(...nodes.map(n => n.d));
-  const W = PAD * 2 + maxD * COL + 190, H = PAD * 2 + rows * ROW;
-  const px = n => PAD + n.d * COL, py = n => PAD + n.y * ROW + ROW / 2 + 6;
+  const COL = wide ? 178 : 132, ROW = wide ? 52 : 46, PAD = 30, maxD = Math.max(...nodes.map(n => n.d));
+  const TOP = 30, W = PAD * 2 + maxD * COL + 190, H = PAD * 2 + TOP + rows * ROW;
+  const px = n => PAD + n.d * COL, py = n => PAD + TOP + n.y * ROW + ROW / 2 + 6;
   const pw = n => Math.max(46, n.label.length * 7.6 + 20);
   const selKey = mapUI.sel.join(' ');
   let edges = '', pills = '';
   for (const n of nodes) for (const k of n.kids) {
     const x1 = px(n) + pw(n), y1 = py(n), x2 = px(k), y2 = py(k), mx = (x1 + x2) / 2;
     const w = k.share != null ? 2 + Math.min(1, k.share * 1.6) * 12 : 4;
-    edges += `<path class="e ${k.by === 'me' ? 'me' : k.prepared ? 'ok' : 'gap'}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}" stroke-width="${w.toFixed(1)}"/>`;
+    edges += `<path class="e ${k.by === 'me' ? (k.prepared ? 'me' : 'gap') : k.prepared ? 'ok' : 'gap'}${k.onPath ? ' path' : ''}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}" stroke-width="${w.toFixed(1)}"/>`;
   }
   for (const n of nodes) {
     const x = px(n), y = py(n), w = pw(n);
-    const cls = ['p', n.kind === 'root' ? 'root' : n.by === 'me' ? 'me' : n.prepared ? 'rep' : 'gap', n.memory || '', n.line.join(' ') === selKey ? 'sel' : ''].join(' ');
+    const cls = ['p', n.kind === 'root' ? 'root' : n.by === 'me' ? (n.prepared ? 'me' : 'me off') : n.prepared ? 'rep' : 'gap', n.memory || '', n.line.join(' ') === selKey ? 'sel' : '', n.onPath ? 'path' : ''].join(' ');
+    if (n.line.join(' ') === selKey) mapUI.selXY = [x + w / 2, y];
     pills += `<g class="${cls}" data-line="${esc(n.line.join(' '))}" tabindex="0" role="button" aria-label="${esc(n.label)}">`;
     if (n.tag) pills += `<text class="on" x="${x}" y="${y - 17}">${esc(n.tag.length > 32 ? n.tag.slice(0, 31) + '…' : n.tag)}</text>`;
     pills += `<rect class="hal" x="${x - 4}" y="${y - 16}" width="${w + 8}" height="32" rx="16"/><rect class="pill" x="${x}" y="${y - 12}" width="${w}" height="24" rx="12"/><text class="lb" x="${x + w / 2}" y="${y + 5}" text-anchor="middle">${esc(n.label)}</text>`;
-    const q = (txt, warn) => `<circle class="qb" cx="${x + w + 14}" cy="${y}" r="8.5"/><text class="qt" x="${x + w + 14}" y="${y + 4}" text-anchor="middle">?</text><text class="sh${warn ? ' g' : ''}" x="${x + w + 28}" y="${y + 4.5}">${txt}</text>`;
+    // notes go beside the pill, or under it when lines carry on to the right
+    const below = n.kids.length > 0, bx = below ? x + 9 : x + w + 14, by = below ? y + 25 : y;
+    const q = (txt, warn) => `<circle class="qb" cx="${bx}" cy="${by}" r="${below ? 7 : 8.5}"/><text class="qt" x="${bx}" y="${by + 4}" text-anchor="middle">?</text><text class="sh${warn ? ' g' : ''}${below ? ' sm' : ''}" x="${bx + (below ? 11 : 14)}" y="${by + 4.5}">${txt}</text>`;
     const pc = s => (s * 100).toFixed(s < 0.1 ? 1 : 0) + '%';
     if (n.end === 'gap') pills += q(n.share != null ? `${pc(n.share)} of games` : 'not prepared', true);
     else if (n.end === 'mine' && n.kind !== 'root') pills += q('your move?', true);
-    else if (n.by === 'opp' && n.share != null) pills += `<text class="sh" x="${x + w + 8}" y="${y + 4.5}">${pc(n.share)}</text>`;
+    else if (n.noPrep) pills += q('no move prepared', true);
+    else if (n.by === 'me' && !n.prepared) pills += q('not in your prep', true);
+    else if (n.by === 'opp' && n.share != null) pills += `<text class="sh${below ? ' sm' : ''}" x="${below ? x + 2 : x + w + 8}" y="${below ? y + 29 : y + 4.5}">${pc(n.share)}${below ? ' of games' : ''}</text>`;
     pills += '</g>';
   }
   mapUI.rootY = py(root); mapUI.W = W; mapUI.H = H;
+  if (!nodes.some(n => n.line.join(' ') === selKey)) mapUI.selXY = null;
   return `<svg class="tree" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Repertoire tree">${edges}${pills}</svg>`;
 }
 // saves the tree as a PNG picture
@@ -2819,6 +2837,95 @@ function setFull(on) {
   if (mapUI.tree) setZoom(mapUI.z || 1, false);
 }
 
+// ---------- "This line" view: the tree follows the moves you play ----------
+const pathMode = () => mapSet().view !== 'full';
+function exCached(fen) { exLoad(); const u = exUrl(fen); return exCache.has(u) ? exCache.get(u) : undefined; }
+// builds the line you're on, with every reply (prepared or not) at each step. fetch=false uses saved data only
+async function buildPathTree(line, fetch) {
+  const sc = curScope(), side = sc.side, m = mapSet(), useDb = dbReady();
+  const base = isPrefix(mapUI.root, line) ? mapUI.root : [];
+  const { pos: rootPos, steps: rootSteps } = lineFromStart(base);
+  const { steps } = lineFromStart(line);
+  const last = rootSteps.at(-1);
+  const root = { pos: rootPos, ply: rootSteps.length, line: rootSteps.map(s => s.san), label: last ? moveLabel(last.num, last.turn, last.san) : 'Start', kids: [], kind: 'root', onPath: true };
+  let node = root, missing = false;
+  for (let i = rootSteps.length; ; i++) {
+    const pos = node.pos, prep = prepAt(pos, sc), mine = pos.turn === side, next = steps[i];
+    let stats = null;
+    if (useDb) {
+      stats = exCached(Chess0.fen(pos));
+      if (stats === undefined) {
+        if (fetch) { try { stats = await explore(Chess0.fen(pos)); } catch (e) { stats = null; } }
+        else { stats = null; missing = true; }
+      }
+    }
+    if (stats && stats.o) node.on = node.on || stats.o;
+    const total = stats ? stats.w + stats.d + stats.b : 0, seen = new Set();
+    const add = (san, share, opening, w = 0, d = 0, b = 0) => {
+      const real = Chess0.fromSan(pos, san);
+      if (!real || seen.has(strip(real.san))) return;
+      seen.add(strip(real.san));
+      const isPrep = (mine ? prep.my : prep.opp).has(strip(real.san));
+      const g = w + d + b;
+      node.kids.push({ pos: real.next, ply: node.ply + 1, line: node.line.concat(real.san), label: moveLabel(pos.full, pos.turn, real.san), by: mine ? 'me' : 'opp',
+        prepared: isPrep, share, opening, mv: g ? { w, d, b } : null, kids: [], end: !mine && !isPrep && prep.inPrep ? 'gap' : null });
+    };
+    const onLine = san => next && strip(san) === strip(next.san);
+    if (stats && total) for (const [san, w, d, b, opening] of stats.m) {
+      const share = (w + d + b) / total, k = strip(san);
+      // your turn: only your prepared moves (and the one you played); their turn: every common reply
+      if (mine ? prep.my.has(k) || onLine(san) : prep.opp.has(k) || onLine(san) || share * 100 >= m.thr) add(san, share, opening, w, d, b);
+    }
+    for (const mv of (mine ? prep.my : prep.opp).values()) add(mv.san, stats ? 0 : null, '');
+    if (next) add(next.san, stats ? 0 : null, '');
+    node.kids.sort((a, b) => (b.share ?? 0) - (a.share ?? 0) || (b.prepared - a.prepared));
+    if (mine && !prep.my.size && node.kind !== 'root' && !next) node.noPrep = true;
+    if (!next) break;
+    const k = node.kids.find(x => strip(x.line.at(-1)) === strip(next.san));
+    if (!k) break;
+    k.onPath = true;
+    node = k;
+  }
+  return { root, missing };
+}
+let pathRun = 0;
+async function drawPath() {
+  const run = ++pathRun, line = mapUI.sel.slice();
+  const first = await buildPathTree(line, false);
+  if (run !== pathRun) return;
+  paintPath(first.root);
+  if (!first.missing) return;
+  const full = await buildPathTree(line, true);
+  if (run === pathRun) paintPath(full.root);
+}
+function paintPath(root) {
+  const box = $('#mp-tree');
+  if (!box || !pathMode()) return;
+  const keep = box.querySelector('svg.tree') ? [box.scrollLeft, box.scrollTop] : null;
+  box.innerHTML = treeSvg(root, true);
+  box.dataset.key = 'path';
+  mapUI.z = 1;
+  setZoom(curZoom(), false, 0, 0);
+  if (keep) [box.scrollLeft, box.scrollTop] = keep;
+  // keep the position you're on in view
+  if (mapUI.selXY) {
+    const z = mapUI.z, x = mapUI.selXY[0] * z, y = mapUI.selXY[1] * z;
+    if (x < box.scrollLeft + 40 || x > box.scrollLeft + box.clientWidth - 160) box.scrollLeft = Math.max(0, x - box.clientWidth * 0.4);
+    if (y < box.scrollTop + 50 || y > box.scrollTop + box.clientHeight - 50) box.scrollTop = Math.max(0, y - box.clientHeight / 2);
+  }
+}
+function bindTreeOnce() {
+  const box = $('#mp-tree');
+  if (box.dataset.tb) return;
+  box.dataset.tb = 1;
+  const go = g => {
+    setSel(g.dataset.line ? g.dataset.line.split(' ') : []);
+    if (!pathMode() && innerWidth < 1000 && !mapUI.fs) $('#mp-pos').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  box.addEventListener('click', e => { const g = e.target.closest('g.p'); if (g) go(g); });
+  box.addEventListener('keydown', e => { const g = e.target.closest('g.p'); if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(g); } });
+}
+
 // ---------- rendering ----------
 function renderMap() {
   const m = mapSet(), side = state.settings.side, col = sideName(side);
@@ -2845,7 +2952,7 @@ function renderMap() {
       <label class="ctl"><span>Depth</span><select id="mp-depth">${[3, 4, 5, 6, 7, 8, 10, 12].map(d => `<option value="${d}" ${d === m.depth ? 'selected' : ''}>to move ${d}</option>`).join('')}</select></label>
       <label class="ctl"><span>Show replies</span><select id="mp-thr">${[1, 2, 5, 10, 20].map(t => `<option value="${t}" ${t === m.thr ? 'selected' : ''}>${t}%+</option>`).join('')}</select></label>
       <button class="ghostbtn sm" id="mz-out2" aria-label="Zoom out" title="Zoom out (−)">−</button><button class="ghostbtn sm" id="mz-in2" aria-label="Zoom in" title="Zoom in (+)">+</button>
-      <button class="ghostbtn sm" id="mp-dl" ${tree ? '' : 'disabled'} title="Save the tree as a picture">Download</button>
+      <button class="ghostbtn sm" id="mp-dl" ${tree || pathMode() ? '' : 'disabled'} title="Save the tree as a picture">Download</button>
     </div>
     <div class="ctl-row"><span class="ctl"><span>Database</span></span>${seg('mdb', [['masters', 'Masters'], ['lichess', 'Lichess'], ['none', 'Just my prep']], m.db)}</div>
     ${m.db === 'lichess' ? `<div class="ctl-row"><span class="ctl"><span>Players rated</span></span>${seg('mrating', [['low', 'Under 1600'], ['mid', '1600–2000'], ['high', '2000+'], ['all', 'Everyone']], m.rating)}</div>` : ''}
@@ -2853,14 +2960,17 @@ function renderMap() {
       <p class="cap">Free, and Prep Book asks for no permissions: it can only read public data (the opening database and public games), never change your account. Sign out any time.</p></div>` : ''}`;
   const err = { auth: 'Your Lichess sign-in has expired. Sign in again to load the database.', net: 'Couldn’t reach the Lichess database. Check your internet connection and refresh.', http: 'The Lichess database had a problem with some positions. Try again in a minute.', rate: 'Lichess is busy. Try again in a minute.' }[mapUI.err];
   $('#mp-err').innerHTML = err ? `<p class="bad">${err}</p>` : '';
-  $('#mp-legend').hidden = !tree;
+  const pm = pathMode() && !!card;
+  $('#mp-legend').hidden = !tree && !pm;
+  $('#mp-view').innerHTML = seg('mview', [['path', 'This line'], ['full', 'Whole tree']], pm ? 'path' : 'full');
+  $('#mp-view').hidden = !card;
+  bindTreeOnce();
   // tree
   const box = $('#mp-tree');
+  if (pm) { $('#mp-tbar').hidden = false; drawPath(); }
   const prevScroll = tree && box.dataset.key === mapUI.key ? [box.scrollLeft, box.scrollTop] : null;
-  box.innerHTML = tree ? treeSvg(tree) : '';
-  box.dataset.key = tree ? mapUI.key : '';
-  $('#mp-tbar').hidden = !tree;
-  if (tree) {
+  if (!pm) { box.innerHTML = tree ? treeSvg(tree) : ''; box.dataset.key = tree ? mapUI.key : ''; $('#mp-tbar').hidden = !tree; }
+  if (tree && !pm) {
     mapUI.z = 1;
     const z = curZoom();
     setZoom(z, false, 0, 0);
@@ -2890,17 +3000,22 @@ function bindMap() {
   $('#mp-dl').onclick = downloadTree;
   $('#mz-in').onclick = $('#mz-in2').onclick = () => zoomBy(1.25);
   $('#mz-out').onclick = $('#mz-out2').onclick = () => zoomBy(0.8);
-  $('#mz-fit').onclick = () => { setZoom(fitZoom(), false); state.settings.map = { ...state.settings.map, zoom: 'fit' }; touch('meta'); };
+  $('#mz-fit').onclick = () => { setZoom(fitZoom(), false); state.settings.map = { ...state.settings.map, [zoomKey()]: 'fit' }; touch('meta'); };
   $('#mz-fs').onclick = () => setFull(!mapUI.fs);
   $('#mp-sum-tog') && ($('#mp-sum-tog').onclick = () => { mapUI.sumOpen = mapUI.sumOpen === false; $('#mp-sum').innerHTML = summaryHtml(mapUI.tree); bindMap(); });
+  $('#mp-view .seg') && ($('#mp-view .seg').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    state.settings.map = { ...state.settings.map, view: b.dataset.val }; touch('meta'); renderMap();
+  });
   $$('[data-line]', $('#v-map')).forEach(el => {
-    if (el.closest('#mp-pos')) return;
+    if (el.closest('#mp-pos') || el.closest('#mp-tree')) return;
     const go = () => { setSel(el.dataset.line ? el.dataset.line.split(' ') : []); if (innerWidth < 1000 && !mapUI.fs) $('#mp-pos').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
     el.onclick = go;
     el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
   });
 }
 function markSel() {
+  if (pathMode() && mapUI.cardId) return drawPath();
   const k = mapUI.sel.join(' ');
   $$('#mp-tree g.p').forEach(g => g.classList.toggle('sel', g.dataset.line === k));
 }
@@ -3071,7 +3186,7 @@ async function renderPos() {
   const lichessUrl = `https://lichess.org/analysis/standard/${Chess0.fen(pos).replace(/ /g, '_')}`;
   const list = mvs => esc([...mvs.values()].map(x => x.san).join(', '));
   const prepText = mine
-    ? (prep.my.size ? `Your move. Your prep: <b>${list(prep.my)}</b>.` : prep.inPrep ? '<span class="bad">Your move, and you haven’t prepared one here.</span>' : 'Your move. This position is outside your prep.')
+    ? (prep.my.size ? `Your move. Your prep: <b>${list(prep.my)}</b>.` : `<b>No move prepared.</b> Play one on the board${dbReady() ? ' or pick one below' : ''}.${prep.inPrep ? '' : ' (This position is outside your prep.)'}`)
     : (prep.opp.size ? `Opponent to move. You’ve prepared for <b>${list(prep.opp)}</b>.${dbReady() ? ' Other common replies are below.' : ''}`
       : prep.inPrep ? `Opponent to move. ${dbReady() ? 'Common replies are below; play one to prepare for it.' : 'Your prep ends here.'}` : 'Opponent to move. This position is outside your prep.');
   const branchIds = branchCards(mapUI.sel), nxt = nextMove(mapUI.sel);
@@ -3162,7 +3277,7 @@ function prepMovesTable(pos, prep, stats) {
     return `<span class="rp-wdl" title="You win ${p(win)}% · draw ${p(r.d)}% · lose ${p(loss)}%"><span class="wdl"><i class="win" style="width:${p(win)}%"></i><i class="d" style="width:${p(r.d)}%"></i><i class="loss" style="width:${p(loss)}%"></i></span></span>`;
   };
   const head = stats
-    ? `<div class="rp-h"><span>${mine ? 'Your options' : 'Their replies'} · ${dbName()}</span><span>${total.toLocaleString()} games</span></div>`
+    ? `<div class="rp-h"><span>${mine ? 'Popular choices' : 'Their replies'} · ${dbName()}</span><span>${total.toLocaleString()} games</span></div>`
     : `<div class="rp-h"><span>${mine ? 'Your prepared moves' : 'Replies you’ve prepared'}</span><span></span></div>`;
   return `${head}<div class="rp-list">${rows.slice(0, 15).map(r => {
       const p = total ? 100 * r.g / total : 0;
