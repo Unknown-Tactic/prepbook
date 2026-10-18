@@ -1,0 +1,2665 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Prep Book">
+<meta name="theme-color" content="#2B6B45">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>Prep Book</title>
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.5 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one narrow column built around the board; bottom tab bar like a phone app. */
+:root {
+  --bg: #F1F0EB; --surface: #FFFFFF; --ink: #1B1E1A; --muted: #646A61; --line: #DEDCD3;
+  --accent: #3552C9; --accent-ink: #FFFFFF; --good: #23824F; --bad: #C93434; --warn: #B37A0C;
+  --sq-lt: #EEEADB; --sq-dk: #2B6B45; --sq-last: rgba(214, 186, 58, .5); --sq-sel: rgba(53, 82, 201, .35);
+  --new: #3552C9; --hint: #D08A0A;
+  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121411; --surface: #1C1F1B; --ink: #ECEDE7; --muted: #9EA499; --line: #30342E;
+  --accent: #8197F2; --accent-ink: #10131F; --good: #4FC383; --bad: #F06B6B; --warn: #E3AE3F;
+  --sq-lt: #D8D3C2; --sq-dk: #24603D; --sq-last: rgba(214, 186, 58, .55); --sq-sel: rgba(129, 151, 242, .45);
+  --new: #4A66E0; --hint: #E09A1A; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #121411; --surface: #1C1F1B; --ink: #ECEDE7; --muted: #9EA499; --line: #30342E;
+  --accent: #8197F2; --accent-ink: #10131F; --good: #4FC383; --bad: #F06B6B; --warn: #E3AE3F;
+  --sq-lt: #D8D3C2; --sq-dk: #24603D; --sq-last: rgba(214, 186, 58, .55); --sq-sel: rgba(129, 151, 242, .45);
+  --new: #4A66E0; --hint: #E09A1A; color-scheme: dark; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--f-body); -webkit-text-size-adjust: 100%; }
+* { box-sizing: border-box; }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#app { max-width: 560px; margin: 0 auto; padding-inline: 16px; padding-block: 0 calc(84px + env(safe-area-inset-bottom, 0px)); }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 14px 10px; }
+.brand { font: 750 22px/1 var(--f-display); letter-spacing: -0.01em; margin: 0; }
+.brand small { display: block; font: 500 11px/1.3 var(--f-body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+#side-btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 12px 6px 6px; font-weight: 600; font-size: 14px; }
+#side-btn i { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--ink); background: #F7F5EE; }
+#side-btn[data-side="b"] i { background: #222; }
+#side-btn span.s { color: var(--muted); font-weight: 400; }
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; justify-content: center; background: var(--surface); border-top: 1px solid var(--line); padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)); }
+.tabs button { flex: 1; max-width: 180px; border: 0; background: none; padding: 8px 4px; font-weight: 600; font-size: 13px; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 2px; border-radius: 10px; }
+.tabs button svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.tabs button[aria-current="page"] { color: var(--accent); }
+.h { font: 750 26px/1.15 var(--f-display); margin: 8px 0 14px; text-wrap: balance; }
+.h3 { font: 600 17px/1.3 var(--f-display); margin: 26px 0 10px; }
+.cap { color: var(--muted); font-size: 13px; margin: 6px 0; }
+.mono { font-family: var(--f-mono); font-size: 13px; }
+.good { color: var(--good); font-weight: 600; } .bad { color: var(--bad); font-weight: 600; }
+.notice { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; font-size: 14px; }
+.link { border: 0; background: none; padding: 0; color: var(--accent); font-weight: 600; text-decoration: underline; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; }
+.tile .n { font: 750 28px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.tile .l { font-size: 12px; color: var(--muted); margin-top: 6px; letter-spacing: .02em; }
+.meter { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.meter div { height: 100%; background: var(--good); border-radius: 99px; }
+.panel { display: flex; flex-direction: column; gap: 8px; margin-top: 18px; }
+.lbl { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-top: 10px; }
+select, textarea, input[type="text"] { width: 100%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 10px; padding: 10px 12px; font: inherit; font-size: 16px; }
+textarea { min-height: 110px; font-family: var(--f-mono); font-size: 13px; resize: vertical; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button { flex: 1 1 auto; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 10px; font-weight: 500; font-size: 14px; min-width: 52px; }
+.seg button[aria-checked="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.primary { border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600; font-size: 16px; padding: 14px 18px; border-radius: 12px; margin-top: 14px; width: 100%; }
+.primary:disabled { opacity: .45; cursor: default; }
+.ghostbtn { border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 14px; padding: 10px 14px; border-radius: 10px; }
+.dangerbtn { border: 0; background: var(--bad); color: #fff; font-weight: 600; padding: 10px 14px; border-radius: 10px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+.row .primary { flex: 1 1 200px; margin-top: 0; width: auto; }
+
+/* drill */
+.d-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-block: 2px 10px; }
+.track { flex: 1; height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+#prog-bar { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+#prog-n { font: 500 13px var(--f-mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+#end { border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 14px; padding: 7px 12px; border-radius: 99px; }
+.d-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; min-width: 0; }
+#d-tag { flex: none; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; background: var(--line); }
+#d-tag[data-kind="new"] { background: var(--new); color: #fff; }
+#d-chapter { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+#prog-acc { margin-left: auto; flex: none; font-size: 12px; color: var(--muted); }
+.boardwrap { position: relative; width: min(100%, 560px, 62svh); aspect-ratio: 1; margin: 0 auto; max-width: 100%; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 0 var(--line), 0 6px 24px rgba(0,0,0,.08); }
+#board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.sq { position: relative; display: flex; align-items: center; justify-content: center; }
+.sq.lt { background: var(--sq-lt); } .sq.dk { background: var(--sq-dk); }
+.sq.last::before, .sq.sel::before, .sq.wrongsq::before { content: ""; position: absolute; inset: 0; }
+.sq.last::before { background: var(--sq-last); }
+.sq.sel::before { background: var(--sq-sel); }
+.sq.wrongsq::before { background: color-mix(in srgb, var(--bad) 40%, transparent); }
+.sq.tgt::after { content: ""; position: absolute; width: 28%; height: 28%; border-radius: 50%; background: rgba(10, 25, 15, .3); }
+.sq.tgtc::after { content: ""; position: absolute; inset: 4%; border-radius: 50%; border: 5px solid rgba(10, 25, 15, .3); }
+.sq.pulse::before { background: var(--hint); animation: pulse 1.1s ease-in-out 3; opacity: .7; }
+@keyframes pulse { 50% { opacity: .15; } }
+.pc { position: relative; z-index: 1; width: 92%; height: 92%; stroke-linejoin: round; stroke-linecap: round; pointer-events: none; }
+.pc.w { fill: #FAF8F2; stroke: #1E1E1C; --detail: #1E1E1C; }
+.pc.b { fill: #2A2B2E; stroke: #0C0C0D; --detail: #E9E6DD; }
+.ghost { position: fixed; left: 0; top: 0; z-index: 50; pointer-events: none; }
+.ghost .pc { width: 100%; height: 100%; filter: drop-shadow(0 4px 6px rgba(0,0,0,.3)); }
+.co { position: absolute; font: 600 10px/1 var(--f-body); opacity: .75; z-index: 1; pointer-events: none; }
+.co.rk { top: 3px; left: 3px; } .co.fl { bottom: 3px; right: 4px; }
+.sq.lt .co { color: var(--sq-dk); } .sq.dk .co { color: var(--sq-lt); }
+#arrows { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+.arrow.new line { stroke: var(--new); } .arrow.new polygon { fill: var(--new); }
+.arrow.hint line { stroke: var(--hint); } .arrow.hint polygon { fill: var(--hint); }
+.arrow { opacity: .82; }
+.mark { position: absolute; top: -2%; right: -2%; z-index: 3; width: 42%; height: 42%; max-width: 30px; max-height: 30px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 15px; line-height: 1; box-shadow: 0 1px 4px rgba(0,0,0,.35); animation: pop .18s ease-out; }
+.mark.bad { background: var(--bad); } .mark.ok { background: var(--good); } .mark.fixed { background: var(--warn); }
+@keyframes pop { from { transform: scale(.4); } }
+#prompt { margin: 12px 0 6px; font-weight: 600; font-size: 16px; min-height: 1.5em; }
+#prompt[data-kind="bad"] { color: var(--bad); } #prompt[data-kind="good"] { color: var(--good); } #prompt[data-kind="new"] { color: var(--new); }
+#d-line { font: 13px/1.6 var(--f-mono); color: var(--muted); overflow-wrap: anywhere; margin: 0; }
+#d-line .q { color: var(--ink); font-weight: 600; }
+#d-note { margin: 10px 0 0; padding: 8px 12px; border-left: 3px solid var(--line); color: var(--muted); font-size: 14px; }
+.d-actions { display: flex; gap: 8px; margin-top: 14px; }
+.d-actions button { flex: 1; }
+
+/* summary */
+.score { display: flex; gap: 16px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.ring { --p: 0; flex: none; width: 86px; height: 86px; border-radius: 50%; background: conic-gradient(var(--good) calc(var(--p) * 1%), var(--line) 0); display: grid; place-items: center; }
+.ring span { width: 68px; height: 68px; border-radius: 50%; background: var(--surface); display: grid; place-items: center; font: 750 22px var(--f-display); font-variant-numeric: tabular-nums; }
+.score-text p { margin: 2px 0; } .score-text p + p { color: var(--muted); font-size: 13px; }
+.recs { padding-left: 20px; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.recs li p { margin: 0 0 6px; }
+.recs li::marker { font-weight: 700; color: var(--muted); }
+.trouble { display: flex; flex-direction: column; gap: 10px; }
+.tr { display: flex; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px; align-items: flex-start; }
+.tr-t { min-width: 0; } .tr-t p { margin: 0 0 4px; font-size: 14px; } .tr-t .mono { overflow-wrap: anywhere; }
+.mini { flex: none; display: grid; grid-template-columns: repeat(8, 1fr); width: 112px; height: 112px; border-radius: 4px; overflow: hidden; }
+.mini .sq.last::before { content: ""; position: absolute; inset: 0; background: var(--sq-last); }
+.mini .sq.exp::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 2px var(--good); }
+.mini .pc { width: 100%; height: 100%; stroke-width: 4; }
+.table { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+td { padding: 9px 12px; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 99px; font-variant-numeric: tabular-nums; }
+.pill.g { background: color-mix(in srgb, var(--good) 18%, transparent); color: var(--good); }
+.pill.y { background: color-mix(in srgb, var(--warn) 20%, transparent); color: var(--warn); }
+.pill.r { background: color-mix(in srgb, var(--bad) 16%, transparent); color: var(--bad); }
+.pill.n { background: var(--line); color: var(--muted); }
+.bars { display: flex; flex-direction: column; gap: 8px; }
+.bar-row { display: grid; grid-template-columns: 92px 1fr 44px; gap: 10px; align-items: center; font-size: 13px; }
+.bt { height: 14px; } .bf { height: 100%; background: color-mix(in srgb, var(--bad) 35%, var(--line)); border-radius: 4px; overflow: hidden; min-width: 2px; }
+.bo { height: 100%; background: var(--good); }
+.bv { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.coach-out { white-space: pre-wrap; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-top: 10px; font-size: 14px; }
+
+/* drills + games */
+.drills { display: flex; flex-direction: column; gap: 8px; }
+.drill { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.drill:disabled { opacity: .55; cursor: default; }
+.dr-t { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.dr-n { font: 600 16px/1.3 var(--f-display); }
+.dr-c { font-size: 12px; font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.drill:disabled .dr-c { color: var(--muted); }
+.dr-d { font-size: 13px; color: var(--muted); }
+#picker { margin-top: 12px; }
+.pick { display: flex; flex-direction: column; gap: 6px; }
+.pick .ghostbtn { display: flex; justify-content: space-between; text-align: left; }
+.pick .cap { margin: 0; }
+.mix { color: var(--warn); font-weight: 600; }
+.links { display: flex; flex-direction: column; gap: 6px; }
+.links:empty { display: none; }
+.dl { color: var(--accent); font-weight: 600; font-size: 14px; }
+.list { display: flex; flex-direction: column; gap: 8px; }
+.li { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.li p { margin: 0 0 4px; } .li .mono { overflow-wrap: anywhere; }
+.block { display: block; margin: 2px 0 0; }
+.gdot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--ink); margin-right: 6px; vertical-align: 0; }
+.gdot.w { background: #F7F5EE; } .gdot.b { background: #222; }
+td a { color: var(--accent); }
+#g-report .primary { margin-top: 6px; margin-bottom: 10px; }
+
+/* map */
+#app.wide { max-width: 1240px; }
+.mp-controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.mp-row { display: flex; flex-direction: column; gap: 6px; }
+.mp-row .seg button { flex: 0 1 auto; }
+.mp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; align-items: end; }
+.mp-grid .lbl:nth-of-type(1) { grid-column: 1; grid-row: 1; } .mp-grid .lbl:nth-of-type(2) { grid-column: 2; grid-row: 1; }
+.primary.inline { width: auto; margin-top: 0; padding: 10px 16px; font-size: 15px; }
+.mp-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 10px; }
+@media (min-width: 1000px) { .mp-layout { grid-template-columns: minmax(0, 1fr) 380px; } .mp-pos { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); align-self: start; } }
+.mp-main { min-width: 0; }
+.cov { display: flex; gap: 14px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.cov p { margin: 2px 0; }
+.cov-t { font: 600 16px/1.3 var(--f-display); }
+.ring.sm { width: 64px; height: 64px; } .ring.sm span { width: 50px; height: 50px; font-size: 16px; }
+.crumb { margin-top: 8px; }
+.mp-tree { overflow: auto; max-height: 72vh; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; margin-top: 10px; -webkit-overflow-scrolling: touch; }
+.mp-tree:empty { display: none; }
+.tree { display: block; font-family: var(--f-mono); font-size: 13px; }
+.tree .e { fill: none; stroke-linecap: round; }
+.tree .e.ok { stroke: color-mix(in srgb, var(--good) 70%, var(--line)); }
+.tree .e.gap { stroke: color-mix(in srgb, var(--bad) 55%, var(--line)); stroke-dasharray: 5 6; }
+.tree g.p { cursor: pointer; }
+.tree g.p rect { fill: var(--surface); stroke: var(--line); stroke-width: 2; }
+.tree g.p text { fill: var(--ink); font-weight: 500; }
+.tree g.root rect { fill: var(--line); }
+.tree g.me rect { fill: color-mix(in srgb, var(--good) 22%, var(--surface)); stroke: var(--good); }
+.tree g.rep rect { stroke: color-mix(in srgb, var(--good) 60%, var(--line)); }
+.tree g.gap rect { stroke: var(--bad); stroke-dasharray: 4 3; }
+.tree g.weak rect { stroke: var(--bad); stroke-width: 3.5; stroke-dasharray: none; }
+.tree g.strong rect { stroke: var(--good); stroke-width: 3.5; }
+.tree g.sel rect { stroke: var(--accent); stroke-width: 3.5; stroke-dasharray: none; }
+.tree g.p:focus { outline: none; } .tree g.p:focus-visible rect { stroke: var(--accent); stroke-width: 3.5; }
+.tree text.on { fill: var(--muted); font: 500 11px var(--f-body); }
+.tree text.sh { fill: var(--muted); font: 600 12px var(--f-body); }
+.tree text.sh.g { fill: var(--warn); }
+.lg { display: inline-block; width: 18px; height: 10px; border-radius: 5px; border: 2px solid var(--line); vertical-align: -1px; margin-left: 6px; }
+.lg.me { background: color-mix(in srgb, var(--good) 22%, var(--surface)); border-color: var(--good); }
+.lg.rep { border-color: color-mix(in srgb, var(--good) 60%, var(--line)); }
+.lg.gap { border-color: var(--bad); border-style: dashed; }
+.lg.weak { border-color: var(--bad); border-width: 3px; }
+.lg.strong { border-color: var(--good); border-width: 3px; }
+.gapbtn { display: flex; flex-direction: column; gap: 2px; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.gapbtn .cap { margin: 0; }
+.mp-pos { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; min-width: 0; }
+.pos-h { display: flex; justify-content: space-between; align-items: center; }
+.pos-nav { display: flex; gap: 6px; }
+.ghostbtn.sm { padding: 6px 10px; font-size: 13px; }
+.ghostbtn:disabled { opacity: .45; }
+a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
+.pos-line { margin: 8px 0 4px; overflow-wrap: anywhere; }
+.pos-prep { font-size: 14px; margin: 10px 0 0; }
+.mboard { display: grid; grid-template-columns: repeat(8, 1fr); aspect-ratio: 1; width: 100%; max-width: 380px; margin: 8px auto 0; border-radius: 6px; overflow: hidden; touch-action: manipulation; }
+.mboard .sq { cursor: pointer; }
+.mboard .sq.last::before { content: ""; position: absolute; inset: 0; background: var(--sq-last); }
+.mboard .sq.sel::before { content: ""; position: absolute; inset: 0; background: var(--sq-sel); }
+.mboard .pc { width: 100%; height: 100%; }
+.ps-stats { margin-top: 12px; }
+.mvtab tr[data-san] { cursor: pointer; }
+.mvtab tr[data-san]:hover td { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.mvtab td { padding: 7px 10px; }
+.wdb { display: flex; height: 12px; border-radius: 3px; overflow: hidden; min-width: 90px; border: 1px solid var(--line); }
+.wdb i { display: block; height: 100%; }
+.wdb .w { background: #F4F2EA; } .wdb .d { background: #9A9C95; } .wdb .b { background: #2A2B2E; }
+
+/* library + progress */
+.study { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px 10px; margin-bottom: 14px; }
+.study-n { font: 600 18px/1.25 var(--f-display); overflow-wrap: anywhere; }
+.meter.sm { height: 6px; margin: 8px 0 4px; }
+.study .ch:last-of-type { border-bottom: 0; }
+.study-a { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-top: 10px; }
+.study-a .ghostbtn { font-size: 13px; padding: 8px 12px; }
+.confirm { margin-top: 10px; font-size: 14px; }
+.row.tight { margin-top: 10px; }
+.notice.warn { border-color: var(--warn); }
+.filebtn.small { display: inline-flex; }
+.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+.steps b { font-weight: 600; }
+.filebtn { position: relative; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.filebtn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.filebtn .ghostbtn { pointer-events: none; }
+#imp-fname { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+#imp-msg { font-size: 14px; margin-top: 10px; }
+#imp-msg details { margin-top: 6px; color: var(--muted); }
+.ch { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.ch-t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ch-n { font-weight: 600; overflow-wrap: anywhere; }
+.ch .cap { margin: 0; }
+.sidechip { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 3px 10px; font-size: 12px; font-weight: 600; }
+.x { border: 0; background: none; color: var(--muted); font-size: 12px; font-weight: 600; padding: 6px 2px; }
+.x.armed { color: var(--bad); }
+.tog { position: relative; flex: none; width: 40px; height: 24px; }
+.tog input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; z-index: 1; }
+.tog span { position: absolute; inset: 0; border-radius: 99px; background: var(--line); transition: background .15s; }
+.tog span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
+.tog input:checked + span { background: var(--good); }
+.tog input:checked + span::after { transform: translateX(16px); }
+.tog input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chs { display: flex; flex-direction: column; gap: 14px; }
+.pr-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.stack { display: flex; height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; margin-top: 6px; }
+.stack .m { background: var(--good); } .stack .s { background: color-mix(in srgb, var(--good) 40%, var(--line)); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; }
+.k { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
+.k.m { background: var(--good); } .k.s { background: color-mix(in srgb, var(--good) 40%, var(--line)); } .k.e { background: var(--line); }
+.backup { margin-top: 30px; padding-top: 6px; border-top: 1px solid var(--line); }
+#bk-msg textarea { margin-top: 8px; min-height: 80px; }
+.danger { margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--line); }
+.danger p { font-size: 14px; }
+#sync { font-size: 12px; color: var(--muted); margin: 26px 0 0; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="pc-p" viewBox="0 0 100 100"><g stroke-width="3.2"><circle cx="50" cy="31" r="11"/><path d="M36 77 C37 60 42 50 50 45 C58 50 63 60 64 77 Z"/><path d="M40 47 L60 47 L58 42 L42 42 Z"/><rect x="25" y="76" width="50" height="10" rx="4"/></g></symbol>
+    <symbol id="pc-r" viewBox="0 0 100 100"><g stroke-width="3.2"><path d="M33 76 L35 42 L65 42 L67 76 Z"/><path d="M28 42 L28 20 L37 20 L37 27 L45.5 27 L45.5 20 L54.5 20 L54.5 27 L63 27 L63 20 L72 20 L72 42 Z"/><path d="M30 42 L70 42" /><rect x="23" y="76" width="54" height="10" rx="4"/><path d="M33 70 L67 70" fill="none"/></g></symbol>
+    <symbol id="pc-n" viewBox="0 0 100 100"><g stroke-width="3.2"><path d="M33 77 C33 66 38 59 45 52 C40 52 33 55 27 57 C22 56 19 51 21 46 L33 33 C34 27 37 22 41 17 L45 24 C62 24 73 40 70 77 Z"/><circle cx="38" cy="33" r="2.6" style="fill:var(--detail);stroke:none"/><path d="M26 49 L29 49" style="stroke:var(--detail)" fill="none"/><rect x="25" y="76" width="50" height="10" rx="4"/></g></symbol>
+    <symbol id="pc-b" viewBox="0 0 100 100"><g stroke-width="3.2"><circle cx="50" cy="13" r="4.5"/><path d="M50 18 C63 27 65 40 57 49 L43 49 C35 40 37 27 50 18 Z"/><path d="M54 27 L47 37" style="stroke:var(--detail)" fill="none"/><path d="M38 77 C38 62 42 54 45 49 L55 49 C58 54 62 62 62 77 Z"/><rect x="25" y="76" width="50" height="10" rx="4"/></g></symbol>
+    <symbol id="pc-q" viewBox="0 0 100 100"><g stroke-width="3.2"><path d="M32 77 L37 50 L63 50 L68 77 Z"/><path d="M24 30 L36 50 L64 50 L76 30 L63 40 L57 22 L50 39 L43 22 L37 40 Z"/><circle cx="24" cy="28" r="4"/><circle cx="43" cy="20" r="4"/><circle cx="57" cy="20" r="4"/><circle cx="76" cy="28" r="4"/><path d="M36 58 L64 58" fill="none"/><rect x="24" y="76" width="52" height="10" rx="4"/></g></symbol>
+    <symbol id="pc-k" viewBox="0 0 100 100"><g stroke-width="3.2"><path d="M32 77 L37 50 L63 50 L68 77 Z"/><path d="M35 50 C27 36 40 27 50 37 C60 27 73 36 65 50 Z"/><path d="M47 10 L53 10 L53 16 L59 16 L59 22 L53 22 L53 33 L47 33 L47 22 L41 22 L41 16 L47 16 Z"/><path d="M36 58 L64 58" fill="none"/><rect x="24" y="76" width="52" height="10" rx="4"/></g></symbol>
+  </defs>
+</svg>
+
+<div id="app">
+  <header class="top">
+    <h1 class="brand">Prep Book<small>Opening repertoire trainer</small></h1>
+    <button id="side-btn" type="button" data-side="w" aria-label="Switch colour"><i></i><span><span class="s">Training</span> <span id="side-label">White</span></span></button>
+  </header>
+
+  <main>
+    <section class="view" id="v-train">
+      <div id="t-home"></div>
+      <div id="t-drill" hidden>
+        <div class="d-top"><span id="prog-n">0 moves</span><button id="end" type="button">End &amp; see report</button></div>
+        <div class="d-meta"><span id="d-tag">Review</span><span id="d-chapter"></span><span id="prog-acc"></span></div>
+        <div class="boardwrap"><div id="board" aria-label="Chess board"></div><svg id="arrows" viewBox="0 0 800 800" aria-hidden="true"></svg></div>
+        <p id="prompt" aria-live="polite"></p>
+        <p id="d-line"></p>
+        <p id="d-note" hidden></p>
+        <div class="d-actions"><button class="ghostbtn" id="hint" type="button">Hint</button><button class="ghostbtn" id="skip" type="button">Skip position</button></div>
+      </div>
+      <div id="t-sum" hidden></div>
+    </section>
+
+    <section class="view" id="v-map" hidden>
+      <h2 class="h">Map</h2>
+      <p class="cap">Your repertoire as a tree, checked against what people actually play. Green is your prep, dashed red is a gap.</p>
+      <div id="mp-controls" class="mp-controls"></div>
+      <div class="mp-layout">
+        <div class="mp-main">
+          <div id="mp-head"></div>
+          <p id="mp-status" class="cap" aria-live="polite"></p>
+          <div id="mp-err" aria-live="polite"></div>
+          <div id="mp-tree" class="mp-tree"></div>
+          <p id="mp-legend" class="cap legend" hidden><span class="lg me"></span> your move <span class="lg rep"></span> prepared reply <span class="lg gap"></span> gap: reply not prepared <span class="lg weak"></span> weak point <span class="lg strong"></span> strong point · thicker line = played more often</p>
+          <div id="mp-gaps"></div>
+        </div>
+        <aside id="mp-pos" class="mp-pos"></aside>
+      </div>
+    </section>
+
+    <section class="view" id="v-library" hidden>
+      <h2 class="h">Library</h2>
+      <div class="notice">
+        <b>Get your study out of Lichess</b>
+        <ol class="steps">
+          <li>Open your study on <b>lichess.org</b> in Safari.</li>
+          <li>Under the board, tap the <b>share</b> tab (the arrow/share icon), then tap <b>Study PGN</b> to download every chapter at once. On iPhone it saves to the <b>Files</b> app, in <b>Downloads</b>.</li>
+          <li>Come back here, tap <b>Choose PGN file</b>, and pick that file. Or copy the PGN text and paste it in the box.</li>
+          <li>Tap <b>Import</b>. Each file becomes its own study here. Lichess remembers whether each chapter is for White or Black, and we use that.</li>
+        </ol>
+              </div>
+      <div class="panel">
+        <span class="lbl">PGN file</span>
+        <label class="filebtn"><input type="file" id="imp-file" accept=".pgn,.txt,text/plain,application/x-chess-pgn,application/vnd.chess-pgn"><span class="ghostbtn">Choose PGN file</span><span id="imp-fname">No file chosen</span></label>
+        <label class="lbl" for="imp-text">Or paste PGN</label>
+        <textarea id="imp-text" placeholder='[Event "My White Repertoire: Italian"]&#10;&#10;1. e4 e5 2. Nf3 Nc6 3. Bc4 …'></textarea>
+        <label class="lbl" for="imp-name">Study name (optional)</label>
+        <input id="imp-name" type="text" placeholder="Uses the Lichess study name if left blank" autocomplete="off">
+        <label class="lbl" for="imp-side">These chapters are for</label>
+        <select id="imp-side"><option value="auto">Use the study’s setting (default White)</option><option value="w">White</option><option value="b">Black</option></select>
+        <button class="primary" id="imp-go" type="button">Import</button>
+        <div id="imp-msg" aria-live="polite"></div>
+      </div>
+      <h3 class="h3">Your studies</h3>
+      <p class="cap">Each study keeps its own progress. Switch a chapter off to leave it out of training without deleting it. Updated a study on Lichess? Use “Replace with updated PGN” on that study and it starts fresh.</p>
+      <div id="lib-list"></div>
+    </section>
+
+    <section class="view" id="v-games" hidden>
+      <h2 class="h">Game check</h2>
+      <p class="cap">Compares your real games as <b id="g-side">White</b> with your studies and shows exactly where you, or your opponent, left your prep. Switch colour at the top to check your games with the other colour.</p>
+      <div class="notice">
+        <b>How to check your games</b>
+        <ol class="steps">
+          <li>Type your username below. A download link appears.</li>
+          <li>Tap the link. Your games download as a file to the <b>Files</b> app, in <b>Downloads</b>.</li>
+          <li>Come back, tap <b>Choose games file</b> and pick it. You can pick a Lichess file and a Chess.com file together.</li>
+          <li>Tap <b>Compare with my prep</b>.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <label class="lbl" for="g-li">Lichess username</label>
+        <input id="g-li" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. NathanT">
+        <div id="g-li-links" class="links"></div>
+        <label class="lbl" for="g-cc">Chess.com username</label>
+        <input id="g-cc" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="e.g. nathant">
+        <div id="g-cc-links" class="links"></div>
+        <button class="primary" id="g-fetch" type="button" hidden>Fetch my games and compare</button>
+        <div id="g-dl-help"><span class="lbl">Games file</span></div>
+        <label class="filebtn"><input type="file" id="g-file" multiple accept=".pgn,.txt,text/plain,application/x-chess-pgn,application/vnd.chess-pgn"><span class="ghostbtn">Choose games file</span><span id="g-fname">No file chosen</span></label>
+        <label class="lbl" for="g-text">Or paste games</label>
+        <textarea id="g-text" placeholder="Paste one or more games in PGN format"></textarea>
+        <button class="primary" id="g-go" type="button">Compare with my prep</button>
+        <div id="g-msg" aria-live="polite"></div>
+      </div>
+      <div id="g-report"></div>
+    </section>
+
+    <section class="view" id="v-progress" hidden>
+      <h2 class="h">Progress</h2>
+      <div id="p-body"></div>
+      <div class="backup">
+        <h3 class="h3">Backup</h3>
+        <p class="cap">Save everything (studies, progress, game reports and drills) to a file you keep. You can load it back here, or into an exported copy of Prep Book, so nothing is ever lost.</p>
+        <div class="row tight">
+          <button class="ghostbtn" id="bk-save" type="button">Download backup</button>
+          <label class="filebtn small"><input type="file" id="bk-file" accept=".json,application/json,text/plain"><span class="ghostbtn">Restore from backup</span></label>
+        </div>
+        <p class="cap" id="bk-last"></p>
+        <div id="bk-msg" aria-live="polite"></div>
+      </div>
+      <p id="sync"></p>
+    </section>
+  </main>
+
+  <nav class="tabs" aria-label="Sections">
+    <button type="button" data-v="train" aria-current="page"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="2"/><path d="M3.5 12h17M12 3.5v17"/></svg>Train</button>
+    <button type="button" data-v="map"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="18" cy="5" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="18" cy="19" r="2"/><path d="M7 12h9M7 11.5C11 11 12 5 16 5M7 12.5c4 .5 5 6.5 9 6.5"/></svg>Map</button>
+    <button type="button" data-v="library"><svg viewBox="0 0 24 24"><path d="M5 4h4v16H5zM10 4h4v16h-4zM15.5 4.5l3.8 1-3.9 14.6-3.8-1z"/></svg>Library</button>
+    <button type="button" data-v="games"><svg viewBox="0 0 24 24"><path d="M9 4h6M10 4v3.5L6.5 15a3 3 0 0 0 2.7 4.5h5.6a3 3 0 0 0 2.7-4.5L14 7.5V4"/><path d="M8.5 13h7"/></svg>Games</button>
+    <button type="button" data-v="progress"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>Progress</button>
+  </nav>
+</div>
+<script type="text/plain" id="example-pgn">
+[Event "Example repertoire: Italian Game"]
+[Site "https://lichess.org/study/example"]
+[Result "*"]
+[Variant "Standard"]
+[ECO "C50"]
+[Opening "Italian Game"]
+[Annotator "https://lichess.org/@/example"]
+[StudyName "Example repertoire"]
+[ChapterName "Italian Game"]
+[Orientation "white"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 { Main line: slow Italian with c3 and d3. [%cal Gc2c3] } (3... Nf6 4. d3 Be7 (4... Bc5 5. c3 d6 6. O-O O-O 7. Re1) 5. O-O O-O 6. Re1 d6 7. c3) 4. c3 Nf6 5. d3 d6 6. O-O O-O 7. Re1 a6 8. a4 *
+
+[Event "Example repertoire: Sicilian Alapin"]
+[Site "https://lichess.org/study/example"]
+[Result "*"]
+[StudyName "Example repertoire"]
+[ChapterName "Sicilian Alapin"]
+[Orientation "white"]
+
+1. e4 c5 2. c3 d5 (2... Nf6 3. e5 Nd5 4. d4 cxd4 5. Nf3 Nc6 6. cxd4 d6 7. Bc4) (2... e6 3. d4 d5 4. exd5 exd5 5. Nf3 Nc6 6. Bb5) 3. exd5 Qxd5 4. d4 Nf6 5. Nf3 e6 (5... Bg4 6. Be2 e6 7. O-O) 6. Be2 Nc6 7. O-O *
+
+[Event "Example repertoire: French Advance"]
+[Site "https://lichess.org/study/example"]
+[Result "*"]
+[StudyName "Example repertoire"]
+[ChapterName "French Advance"]
+[Orientation "white"]
+
+1. e4 e6 2. d4 d5 3. e5 c5 4. c3 Nc6 5. Nf3 Qb6 6. a3 *
+</script>
+<script>
+// ---- Chess rules engine (legal moves, SAN, FEN) ----
+const Chess0 = (() => {
+  const FILES = 'abcdefgh';
+  const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+  const sqName = s => FILES[s & 7] + ((s >> 3) + 1);
+  const sqIdx = n => (n.charCodeAt(0) - 97) + (parseInt(n[1], 10) - 1) * 8;
+  const colorOf = pc => pc ? (pc === pc.toUpperCase() ? 'w' : 'b') : null;
+  const at = (f, r) => (f < 0 || f > 7 || r < 0 || r > 7) ? -1 : r * 8 + f;
+  const NM = [[1,2],[2,1],[2,-1],[1,-2],[-1,-2],[-2,-1],[-2,1],[-1,2]];
+  const KM = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]];
+  const RD = [[1,0],[-1,0],[0,1],[0,-1]], BD = [[1,1],[1,-1],[-1,1],[-1,-1]];
+
+  function parse(fen) {
+    const p = String(fen).trim().split(/\s+/);
+    const rows = (p[0] || '').split('/');
+    if (rows.length !== 8) throw new Error('Bad FEN');
+    const b = new Array(64).fill(null);
+    for (let r = 0; r < 8; r++) {
+      let f = 0;
+      for (const ch of rows[r]) {
+        if (/\d/.test(ch)) f += +ch;
+        else { if (!/[pnbrqkPNBRQK]/.test(ch) || f > 7) throw new Error('Bad FEN'); b[(7 - r) * 8 + f] = ch; f++; }
+      }
+    }
+    return { b, turn: p[1] === 'b' ? 'b' : 'w', castle: (p[2] && p[2] !== '-') ? p[2] : '',
+      ep: (p[3] && p[3] !== '-') ? sqIdx(p[3]) : -1, half: +(p[4] || 0), full: +(p[5] || 1) };
+  }
+  function boardFen(b) {
+    let out = '';
+    for (let r = 7; r >= 0; r--) {
+      let e = 0;
+      for (let f = 0; f < 8; f++) {
+        const pc = b[r * 8 + f];
+        if (!pc) e++; else { if (e) { out += e; e = 0; } out += pc; }
+      }
+      if (e) out += e;
+      if (r) out += '/';
+    }
+    return out;
+  }
+  function attacked(b, sq, by) {
+    const f = sq & 7, r = sq >> 3;
+    const pr = by === 'w' ? r - 1 : r + 1, pawn = by === 'w' ? 'P' : 'p';
+    for (const df of [-1, 1]) { const s = at(f + df, pr); if (s >= 0 && b[s] === pawn) return true; }
+    const kn = by === 'w' ? 'N' : 'n', kg = by === 'w' ? 'K' : 'k';
+    for (const [df, dr] of NM) { const s = at(f + df, r + dr); if (s >= 0 && b[s] === kn) return true; }
+    for (const [df, dr] of KM) { const s = at(f + df, r + dr); if (s >= 0 && b[s] === kg) return true; }
+    const rq = by === 'w' ? 'RQ' : 'rq', bq = by === 'w' ? 'BQ' : 'bq';
+    for (const [dirs, set] of [[RD, rq], [BD, bq]]) {
+      for (const [df, dr] of dirs) {
+        let ff = f + df, rr = r + dr;
+        for (;;) {
+          const s = at(ff, rr); if (s < 0) break;
+          const pc = b[s];
+          if (pc) { if (set.includes(pc)) return true; break; }
+          ff += df; rr += dr;
+        }
+      }
+    }
+    return false;
+  }
+  const kingSq = (b, c) => b.indexOf(c === 'w' ? 'K' : 'k');
+
+  function pseudo(pos) {
+    const { b, turn: me } = pos, out = [], opp = me === 'w' ? 'b' : 'w';
+    for (let s = 0; s < 64; s++) {
+      const pc = b[s];
+      if (!pc || colorOf(pc) !== me) continue;
+      const t = pc.toLowerCase(), f = s & 7, r = s >> 3;
+      if (t === 'p') {
+        const dir = me === 'w' ? 1 : -1, startR = me === 'w' ? 1 : 6, lastR = me === 'w' ? 7 : 0;
+        const add = (to, cap) => {
+          if ((to >> 3) === lastR) for (const pr of 'qrbn') out.push({ from: s, to, promo: pr, cap });
+          else out.push({ from: s, to, cap });
+        };
+        const one = at(f, r + dir);
+        if (one >= 0 && !b[one]) {
+          add(one, null);
+          const two = at(f, r + 2 * dir);
+          if (r === startR && two >= 0 && !b[two]) out.push({ from: s, to: two, flag: 'd' });
+        }
+        for (const df of [-1, 1]) {
+          const c = at(f + df, r + dir);
+          if (c < 0) continue;
+          if (b[c] && colorOf(b[c]) === opp) add(c, b[c]);
+          else if (c === pos.ep && !b[c]) out.push({ from: s, to: c, cap: me === 'w' ? 'p' : 'P', flag: 'e' });
+        }
+      } else if (t === 'n' || t === 'k') {
+        for (const [df, dr] of (t === 'n' ? NM : KM)) {
+          const to = at(f + df, r + dr);
+          if (to < 0) continue;
+          if (!b[to]) out.push({ from: s, to });
+          else if (colorOf(b[to]) === opp) out.push({ from: s, to, cap: b[to] });
+        }
+        if (t === 'k') {
+          const home = me === 'w' ? 4 : 60, R = me === 'w' ? 'R' : 'r';
+          const [ks, qs] = me === 'w' ? ['K', 'Q'] : ['k', 'q'];
+          if (s === home && !attacked(b, home, opp)) {
+            if (pos.castle.includes(ks) && !b[home + 1] && !b[home + 2] && b[home + 3] === R &&
+                !attacked(b, home + 1, opp) && !attacked(b, home + 2, opp))
+              out.push({ from: s, to: home + 2, flag: 'k' });
+            if (pos.castle.includes(qs) && !b[home - 1] && !b[home - 2] && !b[home - 3] && b[home - 4] === R &&
+                !attacked(b, home - 1, opp) && !attacked(b, home - 2, opp))
+              out.push({ from: s, to: home - 2, flag: 'q' });
+          }
+        }
+      } else {
+        const dirs = t === 'r' ? RD : t === 'b' ? BD : RD.concat(BD);
+        for (const [df, dr] of dirs) {
+          let ff = f + df, rr = r + dr;
+          for (;;) {
+            const to = at(ff, rr); if (to < 0) break;
+            if (!b[to]) out.push({ from: s, to });
+            else { if (colorOf(b[to]) === opp) out.push({ from: s, to, cap: b[to] }); break; }
+            ff += df; rr += dr;
+          }
+        }
+      }
+    }
+    return out;
+  }
+
+  function apply(pos, m) {
+    const b = pos.b.slice(), pc = b[m.from], w = pos.turn === 'w';
+    b[m.to] = m.promo ? (w ? m.promo.toUpperCase() : m.promo.toLowerCase()) : pc;
+    b[m.from] = null;
+    if (m.flag === 'e') b[m.to + (w ? -8 : 8)] = null;
+    if (m.flag === 'k') { b[m.from + 1] = b[m.from + 3]; b[m.from + 3] = null; }
+    if (m.flag === 'q') { b[m.from - 1] = b[m.from - 4]; b[m.from - 4] = null; }
+    let c = pos.castle;
+    if (pc === 'K') c = c.replace(/[KQ]/g, '');
+    if (pc === 'k') c = c.replace(/[kq]/g, '');
+    for (const sq of [m.from, m.to]) {
+      if (sq === 0) c = c.replace('Q', ''); if (sq === 7) c = c.replace('K', '');
+      if (sq === 56) c = c.replace('q', ''); if (sq === 63) c = c.replace('k', '');
+    }
+    return { b, turn: w ? 'b' : 'w', castle: c, ep: m.flag === 'd' ? (m.from + m.to) / 2 : -1,
+      half: (pc.toLowerCase() === 'p' || m.cap) ? 0 : pos.half + 1, full: w ? pos.full : pos.full + 1 };
+  }
+
+  function legalRaw(pos) {
+    const opp = pos.turn === 'w' ? 'b' : 'w', out = [];
+    for (const m of pseudo(pos)) {
+      const n = apply(pos, m);
+      const k = kingSq(n.b, pos.turn);
+      if (k >= 0 && attacked(n.b, k, opp)) continue;
+      m.next = n; out.push(m);
+    }
+    return out;
+  }
+
+  function legal(pos) {
+    const ms = legalRaw(pos);
+    for (const m of ms) {
+      const pc = pos.b[m.from], t = pc.toLowerCase();
+      let s;
+      if (m.flag === 'k') s = 'O-O';
+      else if (m.flag === 'q') s = 'O-O-O';
+      else if (t === 'p') s = (m.cap ? FILES[m.from & 7] + 'x' : '') + sqName(m.to) + (m.promo ? '=' + m.promo.toUpperCase() : '');
+      else {
+        const amb = ms.filter(o => o !== m && o.to === m.to && pos.b[o.from] === pc);
+        let dis = '';
+        if (amb.length) {
+          const sameFile = amb.some(o => (o.from & 7) === (m.from & 7));
+          const sameRank = amb.some(o => (o.from >> 3) === (m.from >> 3));
+          dis = !sameFile ? FILES[m.from & 7] : !sameRank ? String((m.from >> 3) + 1) : sqName(m.from);
+        }
+        s = t.toUpperCase() + dis + (m.cap ? 'x' : '') + sqName(m.to);
+      }
+      const n = m.next, k = kingSq(n.b, n.turn);
+      if (k >= 0 && attacked(n.b, k, pos.turn)) s += legalRaw(n).length ? '+' : '#';
+      m.san = s;
+    }
+    return ms;
+  }
+
+  const SAN_RE = /^([NBRQK])?([a-h])?([1-8])?x?([a-h][1-8])(?:=?([NBRQnbrq]))?$/;
+  function fromSan(pos, san, ms) {
+    ms = ms || legal(pos);
+    let s = String(san).replace(/[+#!?]/g, '').replace(/^0-0-0$/, 'O-O-O').replace(/^0-0$/, 'O-O');
+    if (s === 'O-O' || s === 'O-O-O') return ms.find(m => m.flag === (s === 'O-O' ? 'k' : 'q')) || null;
+    const mm = SAN_RE.exec(s);
+    if (!mm) return null;
+    const piece = (mm[1] || 'P').toLowerCase(), ff = mm[2], rr = mm[3], to = sqIdx(mm[4]), promo = mm[5] ? mm[5].toLowerCase() : null;
+    const cands = ms.filter(m => m.to === to && pos.b[m.from].toLowerCase() === piece && !m.flag?.match(/^[kq]$/) &&
+      (!ff || FILES[m.from & 7] === ff) && (!rr || String((m.from >> 3) + 1) === rr) &&
+      (m.promo || null) === (promo || (m.promo ? 'q' : null)));
+    if (cands.length === 1) return cands[0];
+    // a king written as "Kg1" for castling in some files
+    return null;
+  }
+
+  function key(pos) {
+    const ep = pos.ep >= 0 && pseudo(pos).some(m => m.flag === 'e') ? sqName(pos.ep) : '-';
+    return boardFen(pos.b) + ' ' + pos.turn + ' ' + (pos.castle || '-') + ' ' + ep;
+  }
+  const fen = pos => key(pos).replace(/ \S+$/, ' ' + (pos.ep >= 0 ? sqName(pos.ep) : '-')) + ' ' + pos.half + ' ' + pos.full;
+
+  return { START, parse, legal, legalRaw, apply, fromSan, key, fen, sqName, sqIdx, attacked, kingSq };
+})();
+// ---- PGN import + repertoire graph ----
+const Core = (() => {
+  function cleanComment(c) { return c.replace(/\[%[^\]]*\]/g, '').replace(/\s+/g, ' ').trim(); }
+
+  function parsePgn(text) {
+    const games = [];
+    let g = null, i = 0;
+    const n = text.length;
+    const newGame = () => { g = { headers: {}, root: { children: [], parent: null }, stack: [], started: false, done: false }; g.cur = g.root; games.push(g); };
+    while (i < n) {
+      const c = text[i];
+      if (c === ' ' || c === '\n' || c === '\r' || c === '\t' || c === '\ufeff') { i++; continue; }
+      if (c === '[') {
+        const end = text.indexOf(']', i);
+        const raw = text.slice(i, end < 0 ? n : end + 1);
+        const m = /^\[\s*([A-Za-z0-9_]+)\s+"((?:[^"\\]|\\.)*)"\s*\]$/.exec(raw);
+        if (!g || g.started) newGame();
+        if (m) g.headers[m[1]] = m[2].replace(/\\(.)/g, '$1');
+        i = end < 0 ? n : end + 1; continue;
+      }
+      if (c === '{') {
+        const end = text.indexOf('}', i);
+        const com = cleanComment(text.slice(i + 1, end < 0 ? n : end));
+        if (g && com && g.cur !== g.root && !g.cur.comment) g.cur.comment = com;
+        i = end < 0 ? n : end + 1; continue;
+      }
+      if (c === ';') { const e = text.indexOf('\n', i); i = e < 0 ? n : e + 1; continue; }
+      if (c === '%' && (i === 0 || text[i - 1] === '\n')) { const e = text.indexOf('\n', i); i = e < 0 ? n : e + 1; continue; }
+      if (!g || g.done) newGame();
+      if (c === '(') { g.started = true; g.stack.push(g.cur); g.cur = g.cur.parent || g.root; i++; continue; }
+      if (c === ')') { g.cur = g.stack.pop() || g.root; i++; continue; }
+      if (c === '$') { i++; while (i < n && /\d/.test(text[i])) i++; continue; }
+      let j = i;
+      while (j < n && !/[\s(){};\[]/.test(text[j])) j++;
+      let w = text.slice(i, j); i = j;
+      if (/^(1-0|0-1|1\/2-1\/2|\*)$/.test(w)) { g.started = true; if (!g.stack.length) g.done = true; continue; }
+      w = w.replace(/^\d+\.+/, '').replace(/[!?]+$/, '');
+      if (!w || /^\d+\.*$/.test(w) || w === '--' || w === 'Z0') continue;
+      g.started = true;
+      let node = g.cur.children.find(ch => ch.san === w);
+      if (!node) { node = { san: w, parent: g.cur, children: [] }; g.cur.children.push(node); }
+      g.cur = node;
+    }
+    return games.filter(x => x.root.children.length || Object.keys(x.headers).length);
+  }
+
+  // Split a PGN file into chapter records (raw PGN text per chapter, with metadata)
+  function splitChapters(text) {
+    const games = parsePgn(text);
+    // also split raw text per game so each chapter keeps its own PGN
+    const parts = [];
+    const re = /(^|\n)\s*\[Event /g;
+    let idx = [], m;
+    while ((m = re.exec(text))) idx.push(m.index + m[1].length);
+    if (idx.length === games.length && idx.length > 0) {
+      for (let k = 0; k < idx.length; k++) parts.push(text.slice(idx[k], idx[k + 1] ?? text.length).trim());
+    } else {
+      for (const gm of games) parts.push(null);
+    }
+    return games.map((gm, k) => {
+      const h = gm.headers;
+      let study = h.StudyName || '', name = h.ChapterName || '';
+      const ev = h.Event || '';
+      if (!name && ev.includes(': ')) { study = study || ev.slice(0, ev.indexOf(': ')); name = ev.slice(ev.indexOf(': ') + 2); }
+      if (!name) name = ev && ev !== '?' ? ev : (h.White && h.Black && h.White !== '?' ? h.White + ' – ' + h.Black : 'Chapter ' + (k + 1));
+      const o = (h.Orientation || '').toLowerCase();
+      return { name, study, orientation: o === 'black' ? 'b' : o === 'white' ? 'w' : '', pgn: parts[k] || serialize(gm), moves: countNodes(gm.root) };
+    });
+  }
+  function countNodes(nd) { let c = 0; for (const ch of nd.children) c += 1 + countNodes(ch); return c; }
+  function serialize(gm) {
+    let s = Object.entries(gm.headers).map(([k, v]) => `[${k} "${v.replace(/"/g, '\\"')}"]`).join('\n') + '\n\n';
+    const walk = (nd) => {
+      let out = '';
+      let cur = nd;
+      while (cur.children.length) {
+        const [main, ...alts] = cur.children;
+        out += main.san + ' ';
+        for (const a of alts) out += '( ' + a.san + ' ' + walk(a) + ') ';
+        cur = main;
+      }
+      return out;
+    };
+    return s + walk(gm.root) + '*';
+  }
+
+  // Build the training graph for one side from a list of chapters
+  function build(chapters, side, ns) {
+    ns = ns || '';
+    const nodes = new Map();
+    const warnings = [];
+    for (const ch of chapters) {
+      const games = parsePgn(ch.pgn);
+      const gm = games[0];
+      if (!gm) { warnings.push(`${ch.name}: no moves found`); continue; }
+      let start;
+      try { start = Chess0.parse(gm.headers.FEN || Chess0.START); } catch (e) { warnings.push(`${ch.name}: bad starting position`); continue; }
+      const stack = [[gm.root, start, [], null, null]];
+      while (stack.length) {
+        const [nd, pos, path, last, prev] = stack.pop();
+        const k = ns + Chess0.key(pos);
+        let e = nodes.get(k);
+        if (!e) {
+          e = { key: k, fen: Chess0.fen(pos), turn: pos.turn, my: [], opp: [], chapters: new Set(), path, last, prev, ply: path.length, comment: '' };
+          nodes.set(k, e);
+        } else if (path.length < e.path.length) { e.path = path; e.last = last; e.prev = prev; e.ply = path.length; }
+        e.chapters.add(ch.id);
+        if (nd.comment && !e.comment) e.comment = nd.comment;
+        if (!nd.children.length) continue;
+        const ms = Chess0.legal(pos);
+        for (let ci = nd.children.length - 1; ci >= 0; ci--) {
+          const child = nd.children[ci];
+          const mv = Chess0.fromSan(pos, child.san, ms);
+          if (!mv) { warnings.push(`${ch.name}: couldn't read "${child.san}" after ${fmtPath(path) || 'the start'}`); continue; }
+          const ck = ns + Chess0.key(mv.next);
+          const list = pos.turn === side ? e.my : e.opp;
+          let item = list.find(x => x.san === mv.san);
+          const rec = { san: mv.san, from: mv.from, to: mv.to, promo: mv.promo || null, child: ck };
+          if (!item) { if (ci === 0) list.unshift(rec); else list.push(rec); }
+          const step = { san: mv.san, num: pos.full, turn: pos.turn };
+          stack.push([child, mv.next, path.concat([step]), { from: mv.from, to: mv.to }, k]);
+        }
+      }
+    }
+    const cards = [];
+    for (const e of nodes.values()) if (e.turn === side && e.my.length) { e.id = side + hash(e.key); cards.push(e); }
+    return { nodes, cards, warnings, side };
+  }
+
+  function fmtPath(path, max) {
+    let out = [];
+    const p = max && path.length > max ? path.slice(path.length - max) : path;
+    p.forEach((s, i) => {
+      if (s.turn === 'w') out.push(s.num + '.' + s.san);
+      else out.push((i === 0 ? s.num + '…' : '') + s.san);
+    });
+    return (max && path.length > max ? '… ' : '') + out.join(' ');
+  }
+  function moveLabel(e) { return e.turn === 'w' ? `${Math.floor(e.ply / 2) + 1}.` : `${Math.floor(e.ply / 2) + 1}…`; }
+
+  function hash(str) {
+    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (let i = 0; i < str.length; i++) { const ch = str.charCodeAt(i); h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677); }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+  }
+
+  return { parsePgn, splitChapters, build, fmtPath, hash, moveLabel };
+})();
+// ---- Prep Book app ----
+(() => {
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const DAY = 864e5;
+const LS_KEY = 'prepbook.v2';
+const NB = 16; // card storage buckets
+const rnd = a => a[Math.floor(Math.random() * a.length)];
+const pct = (a, b) => b ? Math.round(100 * a / b) : 0;
+const uid = p => p + Core.hash(String(Date.now()) + Math.random());
+
+// ---------- state ----------
+// studies: [{id, name, example, importedAt}]
+// chapters: [{id, studyId, name, side, pgn, enabled}]
+// cards: { cardId: schedule record }  (card ids are unique per study, so studies are tracked separately)
+const EXAMPLE_PGN = document.getElementById('example-pgn').textContent;
+function freshState() {
+  const sid = 'sex';
+  const chs = Core.splitChapters(EXAMPLE_PGN).map((c, i) => ({ id: 'ex' + i, studyId: sid, name: c.name, side: 'w', pgn: c.pgn, enabled: true }));
+  return { v: 2, studies: [{ id: sid, name: 'Example repertoire', example: true, importedAt: 0 }], chapters: chs, cards: {}, sessions: [], gameMistakes: {},
+    settings: { side: 'w', mode: 'mixed', focus: '' }, updatedAt: 0 };
+}
+// bring older saved data (single library, no studies) into the study format
+function migrate(s) {
+  if (!s || !Array.isArray(s.chapters)) return null;
+  if (s.v === 2) return { ...freshState(), ...s, settings: { ...freshState().settings, ...s.settings } };
+  const studies = [], byName = {};
+  const chapters = s.chapters.filter(c => !c.example && c.pgn).map(c => {
+    const nm = c.study || 'Imported study';
+    if (!byName[nm]) { byName[nm] = { id: uid('s'), name: nm, importedAt: Date.now() }; studies.push(byName[nm]); }
+    return { id: c.id, studyId: byName[nm].id, name: c.name, side: c.side || 'w', pgn: c.pgn, enabled: c.enabled !== false };
+  });
+  if (!chapters.length) return null;
+  return { ...freshState(), studies, chapters, sessions: [], settings: { ...freshState().settings, side: s.settings?.side || 'w', mode: s.settings?.mode || 'mixed' }, updatedAt: s.updatedAt || 0 };
+}
+let state = freshState();
+try {
+  const raw = localStorage.getItem(LS_KEY) || localStorage.getItem('prepbook.v1');
+  const m = raw && migrate(JSON.parse(raw));
+  if (m) state = m;
+} catch (e) { /* storage unavailable: run in memory */ }
+
+// ---------- saving: this device + Claude account ----------
+const dirty = { meta: false, chapters: new Set(), removed: new Set(), buckets: new Set() };
+const bucketOf = id => 'k' + (id.charCodeAt(id.length - 1) % NB);
+const Sync = { base: null, chain: Promise.resolve(), timer: 0, mode: 'device' };
+function touch(kind, ids = []) {
+  state.updatedAt = Date.now();
+  dirty.meta = true;
+  if (kind === 'cards') ids.forEach(id => dirty.buckets.add(bucketOf(id)));
+  if (kind === 'allcards') for (let i = 0; i < NB; i++) dirty.buckets.add('k' + i);
+  if (kind === 'chapter') ids.forEach(id => { dirty.chapters.add(id); dirty.removed.delete(id); });
+  if (kind === 'removed') ids.forEach(id => { dirty.removed.add(id); dirty.chapters.delete(id); });
+  clearTimeout(Sync.timer);
+  Sync.timer = setTimeout(flush, 1200);
+}
+function saveLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { /* full or blocked */ } }
+function metaDoc() {
+  return { v: 2, updatedAt: state.updatedAt, settings: state.settings, gameReport: state.gameReport || null, gameMistakes: state.gameMistakes || {}, sessions: state.sessions.slice(-80), studies: state.studies,
+    chapters: state.chapters.map(c => ({ id: c.id, studyId: c.studyId, name: c.name, side: c.side, enabled: c.enabled })) };
+}
+function flush() {
+  saveLocal();
+  if (!Sync.base) return;
+  const base = Sync.base;
+  const chap = [...dirty.chapters], rem = [...dirty.removed], bks = [...dirty.buckets], meta = dirty.meta;
+  dirty.chapters.clear(); dirty.removed.clear(); dirty.buckets.clear(); dirty.meta = false;
+  Sync.chain = Sync.chain.then(async () => {
+    for (const id of chap) { const c = state.chapters.find(x => x.id === id); if (c) await base.collection('chapters').doc(id).set({ pgn: c.pgn }); }
+    for (const id of rem) await base.collection('chapters').doc(id).delete();
+    for (const b of bks) {
+      const cards = {};
+      for (const [id, r] of Object.entries(state.cards)) if (bucketOf(id) === b) cards[id] = r;
+      await base.collection('cards').doc(b).set({ cards });
+    }
+    if (meta) await base.set(metaDoc());
+    setSyncLabel('account');
+  }).catch(() => { setSyncLabel('error'); dirty.meta = true; });
+}
+function setSyncLabel(m) {
+  Sync.mode = m;
+  const el = $('#sync');
+  if (!el) return;
+  el.textContent = m === 'account' ? 'Progress saved to your Claude account, so it follows you across devices.'
+    : m === 'error' ? 'Couldn’t reach your Claude account just now. Progress is kept on this device and will retry on your next move.'
+    : IN_CLAUDE ? 'Progress is saved on this device only. Open the page while signed in to Claude to keep it across devices.'
+    : 'Progress is saved in this browser. Use Backup below regularly, and Restore to move your progress to another device.';
+}
+async function initSync() {
+  const C = window.claude;
+  if (!C || typeof C.use !== 'function') { setSyncLabel('device'); return; }
+  const [db, user] = await Promise.all([C.use('db'), C.use('user')]);
+  if (!db || !user) { setSyncLabel('device'); return; }
+  const id = await user.id();
+  if (!id) { setSyncLabel('device'); return; }
+  const base = db.doc('data/users/' + id + '/book');
+  try {
+    const snap = await base.get();
+    const remote = snap.exists ? snap.data() : null;
+    if (remote && (remote.updatedAt || 0) > (state.updatedAt || 0)) {
+      const [chs, bks] = await Promise.all([base.collection('chapters').get(), base.collection('cards').get()]);
+      const pgn = {}; chs.docs.forEach(d => { pgn[d.id] = d.data().pgn; });
+      const chapters = (remote.chapters || []).map(c => ({ ...c, pgn: pgn[c.id] || '' })).filter(c => c.pgn);
+      let next;
+      if (remote.v === 2) {
+        const cards = {};
+        bks.docs.forEach(d => { if (d.id[0] === 'k') Object.assign(cards, d.data().cards || {}); });
+        for (const [cid, r] of Object.entries(state.cards)) if (!cards[cid] || (r.t || 0) > (cards[cid].t || 0)) cards[cid] = r;
+        next = { ...freshState(), studies: remote.studies || [], chapters, cards, sessions: remote.sessions || [], gameReport: remote.gameReport || null, gameMistakes: remote.gameMistakes || {},
+          settings: { ...freshState().settings, ...remote.settings }, updatedAt: remote.updatedAt };
+      } else {
+        next = migrate({ ...remote, chapters: chapters.map(c => ({ ...c, study: (remote.chapters.find(x => x.id === c.id) || {}).study })) });
+      }
+      if (next && next.chapters.length) {
+        state = next;
+        if (remote.v !== 2) { state.updatedAt = Date.now(); state.chapters.forEach(c => dirty.chapters.add(c.id)); touch('allcards'); }
+        saveLocal();
+        rebuild();
+        if (!S) render();
+      }
+      Sync.base = base;
+      if (remote.v !== 2) flush();
+    } else {
+      Sync.base = base;
+      if (state.updatedAt > 0) {
+        state.chapters.forEach(c => dirty.chapters.add(c.id));
+        touch('allcards');
+        flush();
+      }
+    }
+    setSyncLabel('account');
+  } catch (e) { setSyncLabel('error'); }
+}
+
+// ---------- repertoire ----------
+let rep = null, repVersion = 0;
+const studyOf = id => state.studies.find(s => s.id === id);
+const chapterOf = id => state.chapters.find(c => c.id === id);
+function buildSide(side) {
+  const out = { nodes: new Map(), cards: [], warnings: [], side };
+  for (const st of state.studies) {
+    const chs = state.chapters.filter(c => c.studyId === st.id && c.enabled && c.side === side);
+    if (!chs.length) continue;
+    const r = Core.build(chs, side, st.id + '|');
+    r.nodes.forEach((v, k) => out.nodes.set(k, v));
+    r.cards.forEach(c => { c.study = st.id; c.id = side + st.id + '_' + Core.hash(c.key); out.cards.push(c); });
+    out.warnings.push(...r.warnings.map(w => st.name + ' › ' + w));
+  }
+  out.byId = new Map(out.cards.map(c => [c.id, c]));
+  return out;
+}
+function rebuild() {
+  repVersion++;
+  rep = buildSide(state.settings.side);
+  const f = state.settings.focus;
+  if (f && !rep.cards.some(c => inFocus(c, f))) state.settings.focus = '';
+}
+const multiStudy = () => state.studies.length > 1;
+const chName = id => { const c = chapterOf(id); if (!c) return 'Chapter'; return multiStudy() ? `${studyOf(c.studyId)?.name || ''} › ${c.name}` : c.name; };
+function inFocus(card, f) {
+  if (!f) return true;
+  if (f.startsWith('s:')) return card.study === f.slice(2);
+  if (f.startsWith('c:')) return card.chapters.has(f.slice(2));
+  return true;
+}
+const cardsInScope = () => rep.cards.filter(c => inFocus(c, state.settings.focus));
+function chapterLabel(card) {
+  const f = state.settings.focus;
+  if (f && f.startsWith('c:') && card.chapters.has(f.slice(2))) return chName(f.slice(2));
+  const ids = [...card.chapters];
+  return ids.length > 1 ? chName(ids[0]) + ' +' + (ids.length - 1) : chName(ids[0]);
+}
+const primaryChapter = card => [...card.chapters][0];
+
+// ---------- spaced repetition ----------
+const newRec = () => ({ s: 'learn', i: 0, e: 2.5, d: Date.now(), r: 0, l: 0, ok: 0, bad: 0, t: Date.now() });
+function gradeGood(card, extra) {
+  const r = state.cards[card.id];
+  const now = Date.now();
+  if (!r) return;
+  r.ok++; r.t = now;
+  if (extra && r.s === 'review') return; // extra practice doesn't move the schedule
+  if (r.s !== 'review' || !r.i) { r.i = 1; r.s = 'review'; }
+  else { r.i = Math.min(365, Math.max(r.i + 1, Math.round(r.i * r.e))); r.e = Math.min(3, r.e + 0.05); }
+  r.r++; r.d = now + r.i * DAY;
+}
+function gradeBad(card) {
+  const now = Date.now();
+  const r = state.cards[card.id] || (state.cards[card.id] = newRec());
+  r.l++; r.bad++; r.e = Math.max(1.3, r.e - 0.2); r.i = 0; r.s = 'relearn'; r.d = now; r.t = now; r.r = 0;
+}
+function status(card) {
+  const r = state.cards[card.id];
+  if (!r) return 'new';
+  if (r.d <= Date.now()) return 'due';
+  if (r.s === 'review' && r.i >= 21) return 'mastered';
+  return 'learned';
+}
+
+// ---------- session (runs until you tap End) ----------
+let S = null;
+const started = c => !!state.cards[c.id];
+function drillScope(study) { return rep.cards.filter(c => !study || c.study === study); }
+function weakList(cards) {
+  return cards.filter(c => { const r = state.cards[c.id]; return r && (r.l >= 2 || r.s === 'relearn' || (r.bad >= 2 && r.ok < r.bad * 2)); })
+    .sort((a, b) => state.cards[b.id].l - state.cards[a.id].l).slice(0, 40);
+}
+function gameList(cards) { const gm = state.gameMistakes || {}; return cards.filter(c => gm[c.id]); }
+const today = () => new Date().toISOString().slice(0, 10);
+function mixPairs(cards) {
+  const ids = new Set(cards.map(c => c.id)), seen = new Set(), pairs = [];
+  for (const c of cards) for (const b of (state.cards[c.id]?.cx || [])) {
+    if (!ids.has(b)) continue;
+    const k = [c.id, b].sort().join('~');
+    if (!seen.has(k)) { seen.add(k); pairs.push([c.id, b]); }
+  }
+  return pairs;
+}
+// spread a list so consecutive positions come from different chapters
+function interleave(cards) {
+  const by = {};
+  cards.forEach(c => (by[primaryChapter(c)] = by[primaryChapter(c)] || []).push(c));
+  const lists = Object.values(by).map(l => l.sort(() => Math.random() - 0.5)), out = [];
+  while (lists.some(l => l.length)) for (const l of lists) if (l.length) out.push(l.shift());
+  return out;
+}
+function startSession(opts = {}) {
+  const kind = opts.kind || 'normal';
+  const scopeCards = opts.scopeCards || (kind === 'normal' ? cardsInScope() : drillScope(opts.study));
+  if (!scopeCards.length) return;
+  let forced = opts.forced ? [...opts.forced] : [];
+  if (kind === 'weak') forced = interleave(weakList(scopeCards)).map(c => c.id);
+  if (kind === 'mix') forced = mixPairs(scopeCards).sort(() => Math.random() - 0.5).slice(0, 20).flat();
+  if (kind === 'games') forced = interleave(gameList(scopeCards)).map(c => c.id);
+  S = {
+    kind, study: opts.study || '', scopeCards, scopeSet: opts.scopeCards ? new Set(opts.scopeCards.map(c => c.id)) : null,
+    mode: kind === 'normal' ? state.settings.mode : 'mixed', count: 0, queue: [], events: [], startedAt: Date.now(), lastId: null,
+    done: new Set(), recent: [], forced, introBy: {}, lastCh: null,
+    seg: null, entry: null, awaiting: false, extra: false
+  };
+  trainMode = 'drill';
+  showView('train');
+  nextSegment();
+}
+// prefer a position from a different chapter than the last one, so chapters keep mixing
+function mixPick(list, weightFn) {
+  if (!list.length) return null;
+  const other = list.filter(c => !c.chapters.has(S.lastCh));
+  const pool = other.length ? other : list;
+  return weightFn ? weightFn(pool) : rnd(pool);
+}
+function weightedPick(pool) {
+  const now = Date.now();
+  const w = pool.map(c => { const r = state.cards[c.id]; return 1 + Math.min(4, r.l) + (r.d <= now ? 2 : 0); });
+  let t = Math.random() * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < pool.length; i++) { t -= w[i]; if (t <= 0) return pool[i]; }
+  return pool[pool.length - 1];
+}
+function pickStart() {
+  const now = Date.now();
+  const scope = S.scopeCards;
+  const inQ = new Set(S.queue.map(q => q.id));
+  while (S.forced.length) { const c = rep.byId.get(S.forced.shift()); if (c) return c; }
+  if (S.kind !== 'normal') {
+    const qi2 = S.queue.findIndex(q => q.at <= S.count && q.id !== S.lastId);
+    if (qi2 >= 0) return rep.byId.get(S.queue.splice(qi2, 1)[0].id);
+    if (S.kind === 'cold') {
+      let pool = scope.filter(c => started(c) && !S.recent.includes(c.id) && c.id !== S.lastId && !inQ.has(c.id));
+      if (!pool.length) pool = scope.filter(started);
+      const other = pool.filter(c => !c.chapters.has(S.lastCh));
+      return pool.length ? weightedPick(other.length ? other : pool) : null;
+    }
+    if (S.queue.length) return rep.byId.get(S.queue.shift().id);
+    return null;
+  }
+  const qi = S.queue.findIndex(q => q.at <= S.count && q.id !== S.lastId);
+  if (qi >= 0) return rep.byId.get(S.queue.splice(qi, 1)[0].id);
+  const due = scope.filter(c => { const r = state.cards[c.id]; return r && r.d <= now && !inQ.has(c.id) && c.id !== S.lastId && !S.done.has(c.id); });
+  if (due.length) {
+    S.extra = false;
+    return mixPick(due, pool => { pool.sort((a, b) => state.cards[a.id].d - state.cards[b.id].d); return rnd(pool.slice(0, Math.max(4, Math.ceil(pool.length / 3)))); });
+  }
+  const fresh = scope.filter(c => !state.cards[c.id] && !inQ.has(c.id));
+  if (fresh.length) {
+    S.extra = false;
+    // round-robin across chapters: the chapter with the fewest new moves shown this session goes next, earliest move first
+    const byCh = {};
+    for (const c of fresh) for (const ch of c.chapters) (byCh[ch] = byCh[ch] || []).push(c);
+    let chIds = Object.keys(byCh).sort((a, b) => (S.introBy[a] || 0) - (S.introBy[b] || 0) || Math.random() - 0.5);
+    if (chIds.length > 1 && chIds[0] === S.lastCh) chIds = chIds.slice(1).concat(chIds[0]);
+    return byCh[chIds[0]].sort((a, b) => a.ply - b.ply)[0];
+  }
+  // nothing due and nothing new: retests waiting, then extra practice
+  if (S.queue.length) return rep.byId.get(S.queue.shift().id);
+  S.extra = true;
+  let pool = scope.filter(c => state.cards[c.id] && !S.done.has(c.id) && !S.recent.includes(c.id));
+  if (!pool.length) { S.done.clear(); pool = scope.filter(c => state.cards[c.id] && !S.recent.includes(c.id)); }
+  if (!pool.length) pool = scope.filter(c => state.cards[c.id]);
+  return mixPick(pool);
+}
+function lineStart(target) {
+  let e = target, first = target;
+  const seen = new Set();
+  while (e && e.prev && !seen.has(e.prev)) {
+    seen.add(e.prev);
+    e = rep.nodes.get(e.prev);
+    if (e && S.scopeSet && e.turn === rep.side && e.my.length && !S.scopeSet.has(e.id)) break;
+    if (e && e.turn === rep.side && e.my.length) first = e;
+  }
+  return first;
+}
+function nextSegment() {
+  if (!S) return;
+  const target = pickStart();
+  if (!target) return finishSession();
+  const start = S.mode === 'lines' ? lineStart(target) : target;
+  S.lastCh = primaryChapter(target);
+  const budget = S.kind === 'cold' ? rnd([1, 1, 2]) : S.kind !== 'normal' ? 1 : S.mode === 'lines' ? 999 : rnd([1, 2, 2, 3, 3, 4, 5, 6]);
+  S.seg = { guide: S.kind === 'normal' ? target.path : null, budget, extra: 0 };
+  showPosition(start, true);
+}
+function showPosition(entry, fresh, lastMove) {
+  S.entry = entry;
+  S.wrong = 0; S.hint = 0; S.failed = false; S.attempts = []; S.cx = null;
+  S.intro = !state.cards[entry.id]; // only a move you've never been shown gets the arrow up front
+  S.pos = Chess0.parse(entry.fen);
+  S.legal = Chess0.legal(S.pos);
+  S.selected = null;
+  S.awaiting = true;
+  S.tStart = Date.now();
+  S.shownLast = lastMove || entry.last;
+  board.set(S.pos.b, { last: S.shownLast, arrow: S.intro ? { from: entry.my[0].from, to: entry.my[0].to, kind: 'new' } : null, animate: !fresh && !!S.shownLast });
+  drillChrome();
+}
+function attemptMove(m) {
+  if (!S || !S.awaiting) return;
+  const e = S.entry;
+  const hit = e.my.find(x => x.from === m.from && x.to === m.to && (!m.promo || !x.promo || x.promo === m.promo));
+  if (hit) return onCorrect(hit);
+  if (S.intro) { board.flashMark(m.to, 'bad'); setPrompt('Play the move shown by the arrow.', 'new'); return; }
+  S.wrong++;
+  S.attempts.push(m.san);
+  if (!S.failed) { S.failed = true; gradeBad(e); touch('cards', [e.id]); }
+  board.showWrong(m, S.pos.b);
+  board.setArrow({ from: e.my[0].from, to: e.my[0].to, kind: 'hint' });
+  const twin = findTwin(e, m.san);
+  if (twin) {
+    const r = state.cards[e.id];
+    r.cx = [twin.id, ...(r.cx || []).filter(x => x !== twin.id)].slice(0, 3);
+    S.cx = chName(primaryChapter(twin));
+    const sameCh = [...twin.chapters].some(ch => e.chapters.has(ch));
+    setPrompt(`Mix-up: ${m.san.replace(/[+#]/g, '')} is your move in a similar position${sameCh ? ' in this chapter' : ` in ${S.cx}`}. Here the arrow shows the right one.`, 'bad');
+  } else setPrompt('Not your repertoire move. The arrow shows the right one.', 'bad');
+}
+const strip = s => s.replace(/[+#]/g, '');
+const boardOf = c => c._b || (c._b = Chess0.parse(c.fen).b);
+// a wrong move that is your repertoire move in a similar-looking position of the same study = a mix-up
+function findTwin(e, san) {
+  const a = boardOf(e);
+  let best = null, bestD = 9;
+  for (const c of rep.cards) {
+    if (c === e || c.study !== e.study || !c.my.some(x => strip(x.san) === strip(san))) continue;
+    const b = boardOf(c);
+    let d = 0;
+    for (let i = 0; i < 64 && d < bestD; i++) if (a[i] !== b[i]) d++;
+    if (d < bestD) { bestD = d; best = c; }
+  }
+  return best;
+}
+function onCorrect(mv) {
+  const e = S.entry;
+  S.awaiting = false;
+  const ms = Date.now() - S.tStart;
+  const num = e.path.length ? e.path[e.path.length - 1].num + (e.turn === 'w' ? 1 : 0) : 1;
+  S.events.push({ id: e.id, ch: [...e.chapters], intro: S.intro, extra: S.extra, ok: !S.failed, wrong: S.attempts.slice(), exp: e.my.map(x => x.san), num, ms, hint: S.hint > 0, cx: S.cx || null });
+  S.count++;
+  S.lastId = e.id;
+  S.recent = [e.id, ...S.recent].slice(0, 12);
+  const gm = S.kind === 'games' && state.gameMistakes[e.id];
+  if (gm) {
+    if (S.failed) gm.streak = 0;
+    else if (gm.day !== today()) { gm.streak = (gm.streak || 0) + 1; gm.day = today(); }
+    if (gm.streak >= 3) { delete state.gameMistakes[e.id]; S.graduated = (S.graduated || 0) + 1; }
+    touch('meta');
+  }
+  if (S.intro) {
+    state.cards[e.id] = newRec();
+    for (const ch of e.chapters) S.introBy[ch] = (S.introBy[ch] || 0) + 1;
+    S.queue.push({ id: e.id, at: S.count + 3 + Math.floor(Math.random() * 4) });
+  } else if (S.failed) {
+    S.queue.push({ id: e.id, at: S.count + 2 + Math.floor(Math.random() * 3) });
+  } else {
+    const rr = state.cards[e.id];
+    gradeGood(e, S.kind === 'normal' ? S.extra : !(rr && rr.d <= Date.now()));
+    S.done.add(e.id);
+    S.queue = S.queue.filter(q => q.id !== e.id);
+  }
+  touch('cards', [e.id]);
+  const legalMv = S.legal.find(l => l.from === mv.from && l.to === mv.to && (l.promo || null) === (mv.promo || null)) || S.legal.find(l => l.from === mv.from && l.to === mv.to);
+  const after = Chess0.apply(S.pos, legalMv);
+  board.set(after.b, { last: { from: mv.from, to: mv.to }, mark: { sq: mv.to, kind: S.failed ? 'fixed' : 'ok' } });
+  setPrompt(S.intro ? 'Got it. You’ll be tested on this soon.' : S.failed ? 'That’s the move. It will come back shortly.' : 'Correct.', S.failed ? 'neutral' : 'good');
+  showComment(e);
+  drillProgress();
+  const child = rep.nodes.get(mv.child);
+  setTimeout(() => {
+    if (!S) return;
+    if (!child || !child.opp.length) return lineEnd('End of this line.');
+    const reply = chooseReply(child);
+    const nextE = rep.nodes.get(reply.child);
+    S.seg.budget--;
+    const playable = nextE && nextE.my.length;
+    const cont = playable && !(S.kind !== 'normal' && !state.cards[nextE.id]) && (S.seg.budget > 0 || (S.kind === 'normal' && S.mode === 'mixed' && S.seg.extra < 3 && isUrgent(nextE) && (S.seg.extra++, true)));
+    if (cont) {
+      showPosition(nextE, false, { from: reply.from, to: reply.to });
+    } else {
+      board.set(Chess0.parse(nextE ? nextE.fen : child.fen).b, { last: { from: reply.from, to: reply.to } });
+      board.animate(reply.from, reply.to);
+      lineEnd(playable ? 'Switching position…' : 'End of this line.');
+    }
+  }, S.intro ? 520 : 380);
+}
+function isUrgent(e) {
+  if (S.queue.some(q => q.id === e.id && q.at <= S.count)) return true;
+  return status(e) === 'due';
+}
+function chooseReply(entry) {
+  const g = S.seg.guide;
+  if (g && g[entry.ply]) { const m = entry.opp.find(o => o.san === g[entry.ply].san); if (m) return m; }
+  let best = null, bestScore = -1;
+  for (const o of entry.opp) {
+    const nx = rep.nodes.get(o.child);
+    let sc = 1;
+    if (nx && nx.my.length) {
+      const st = status(nx);
+      if (S.queue.some(q => q.id === nx.id && q.at <= S.count)) sc = 5;
+      else if (st === 'due') sc = 4;
+      else if (st === 'new') sc = 3;
+      else sc = 1.5;
+    }
+    sc += Math.random() * 0.9;
+    if (sc > bestScore) { bestScore = sc; best = o; }
+  }
+  return best;
+}
+function lineEnd(msg) {
+  setPrompt(msg, 'neutral');
+  setTimeout(() => { if (S) nextSegment(); }, 650);
+}
+function finishSession() {
+  if (!S) return;
+  const sum = summarize(S);
+  if (sum.tests + sum.intros > 0) {
+    state.sessions.push(sum.record);
+    if (state.sessions.length > 120) state.sessions = state.sessions.slice(-120);
+    touch('meta');
+  }
+  flush();
+  S = null;
+  lastSummary = sum;
+  trainMode = 'summary';
+  render();
+  window.scrollTo(0, 0);
+}
+
+// ---------- analysis ----------
+let lastSummary = null;
+function summarize(s) {
+  const evs = s.events;
+  const tests = evs.filter(e => !e.intro), ok = tests.filter(e => e.ok);
+  const per = {};
+  for (const e of tests) for (const ch of e.ch) {
+    const p = per[ch] || (per[ch] = { id: ch, name: chName(ch), tests: 0, errors: 0 });
+    p.tests++; if (!e.ok) p.errors++;
+  }
+  const chapters = Object.values(per).sort((a, b) => (b.errors / b.tests) - (a.errors / a.tests) || b.errors - a.errors);
+  const troubleMap = {};
+  for (const e of tests) if (!e.ok) {
+    const t = troubleMap[e.id] || (troubleMap[e.id] = { id: e.id, misses: 0, wrong: new Set(), exp: e.exp, cx: null });
+    t.misses++; e.wrong.forEach(w => t.wrong.add(w)); if (e.cx) t.cx = e.cx;
+  }
+  const trouble = Object.values(troubleMap).sort((a, b) => b.misses - a.misses).map(t => ({ ...t, wrong: [...t.wrong] }));
+  const buckets = [[1, 5], [6, 10], [11, 15], [16, 999]].map(([a, b]) => {
+    const xs = tests.filter(e => e.num >= a && e.num <= b);
+    return { label: b > 100 ? `Move ${a}+` : `Moves ${a}–${b}`, tests: xs.length, ok: xs.filter(e => e.ok).length };
+  });
+  const slow = ok.filter(e => e.ms > 10000).length;
+  const avgMs = ok.length ? Math.round(ok.reduce((a, e) => a + e.ms, 0) / ok.length) : 0;
+  const dur = Date.now() - s.startedAt;
+  const scope = rep.cards;
+  const learned = scope.filter(c => state.cards[c.id]).length;
+  const dueSoon = scope.filter(c => state.cards[c.id] && state.cards[c.id].d <= Date.now() + DAY).length;
+  const sum = { kind: s.kind, graduated: s.graduated || 0, tests: tests.length, correct: ok.length, intros: evs.length - tests.length, chapters, trouble, buckets, slow, avgMs, dur, learned, total: scope.length, dueSoon, side: state.settings.side };
+  sum.record = { kind: s.kind, at: s.startedAt, dur, side: sum.side, tests: sum.tests, correct: sum.correct, intros: sum.intros,
+    ch: chapters.map(c => [c.id, c.tests, c.errors]), trouble: trouble.slice(0, 8).map(t => t.id) };
+  sum.recs = recommendations(sum);
+  return sum;
+}
+function recommendations(sum) {
+  const out = [];
+  const weak = sum.chapters.filter(c => c.errors > 0 && c.tests >= 2);
+  if (weak.length) {
+    const w = weak[0];
+    out.push({ text: `Your weakest chapter was <b>${esc(w.name)}</b>: ${w.errors} mistake${w.errors > 1 ? 's' : ''} in ${w.tests} positions (${pct(w.tests - w.errors, w.tests)}% right). Run a short session on just this chapter.`, action: { focus: 'c:' + w.id, label: 'Train this chapter' } });
+  }
+  const mixes = sum.trouble.filter(t => t.cx);
+  if (mixes.length) out.push({ text: `${mixes.length} mistake${mixes.length > 1 ? 's were mix-ups' : ' was a mix-up'}: you played a move that belongs to a similar position elsewhere in your study. The <b>Mix-ups</b> drill puts those look-alike positions side by side so you learn the difference.`, action: { kind: 'mix', label: 'Drill mix-ups' } });
+  const repeat = sum.trouble.filter(t => t.misses >= 2 || (state.cards[t.id]?.l || 0) >= 3);
+  if (repeat.length) out.push({ text: `${repeat.length} position${repeat.length > 1 ? 's keep' : ' keeps'} tripping you up across attempts. Play through ${repeat.length > 1 ? 'those lines' : 'that line'} on Lichess from move 1 and say the reason for each move out loud. Knowing why a move is played makes it stick far better than rote repetition.` });
+  const rated = sum.buckets.filter(b => b.tests >= 3);
+  const bad = rated.slice().sort((a, b) => a.ok / a.tests - b.ok / b.tests)[0];
+  const good = rated.slice().sort((a, b) => b.ok / b.tests - a.ok / a.tests)[0];
+  if (bad && good && bad !== good && pct(bad.ok, bad.tests) < 90) out.push({ text: `You were sharpest in ${good.label.toLowerCase()} (${pct(good.ok, good.tests)}%) and weakest in ${bad.label.toLowerCase()} (${pct(bad.ok, bad.tests)}%). ${bad.label.startsWith('Moves 1') ? 'The early moves matter most: a slip there costs you the whole line.' : 'Deeper moves need more repetitions. Try a session in “Full lines from move 1” mode to rebuild the chain of moves.'}` });
+  if (sum.slow) out.push({ text: `${sum.slow} correct answer${sum.slow > 1 ? 's' : ''} took over 10 seconds. You know them, but not by heart yet. They’ll come back on schedule and get faster.` });
+  const left = sum.total - sum.learned;
+  if (left > 0) out.push({ text: `You’ve started ${sum.learned} of ${sum.total} positions for ${sum.side === 'w' ? 'White' : 'Black'}. ${left} still to see for the first time.` });
+  else if (sum.total) out.push({ text: `Every position in your ${sum.side === 'w' ? 'White' : 'Black'} repertoire has been introduced. From here it’s review: short daily sessions keep it fresh.` });
+  if (sum.dueSoon) out.push({ text: `${sum.dueSoon} position${sum.dueSoon > 1 ? 's are' : ' is'} due in the next 24 hours. A 10-minute session tomorrow is worth more than an hour next week.` });
+  if (sum.kind === 'games') {
+    const left = gameList(rep.cards).length;
+    out.unshift({ text: `${sum.graduated ? `${sum.graduated} game position${sum.graduated > 1 ? 's' : ''} graduated after being solved on 3 different days. ` : ''}${left ? `${left} still in your “From my games” collection. Come back tomorrow: each one needs solving on 3 separate days.` : 'Your “From my games” collection is clear.'}` });
+  }
+  if (!sum.trouble.length && sum.tests >= 5) out.push({ text: 'A clean session. Nothing to fix today.' });
+  return out;
+}
+function chapterStats(side) {
+  const r0 = side === rep.side ? rep : buildSide(side);
+  const res = state.chapters.filter(c => c.side === side).map(c => ({ id: c.id, studyId: c.studyId, name: c.name, enabled: c.enabled, total: 0, learned: 0, mastered: 0, due: 0, ok: 0, bad: 0 }));
+  const map = Object.fromEntries(res.map(r => [r.id, r]));
+  const now = Date.now();
+  for (const card of r0.cards) {
+    const r = state.cards[card.id];
+    for (const ch of card.chapters) {
+      const m = map[ch]; if (!m) continue;
+      m.total++;
+      if (r) { m.learned++; m.ok += r.ok; m.bad += r.bad; if (r.d <= now) m.due++; if (r.s === 'review' && r.i >= 21) m.mastered++; }
+    }
+  }
+  return res;
+}
+
+// ---------- board ----------
+const board = (() => {
+  const el = $('#board'), cells = [], arrowSvg = $('#arrows');
+  let orient = 'w', cur = null;
+  for (let i = 0; i < 64; i++) { const d = document.createElement('div'); d.className = 'sq'; el.appendChild(d); cells.push(d); }
+  const sqAt = idx => { const r = Math.floor(idx / 8), f = idx % 8; return orient === 'w' ? (7 - r) * 8 + f : r * 8 + (7 - f); };
+  const idxOf = sq => cells.findIndex((_, i) => sqAt(i) === sq);
+  const pieceSvg = pc => `<svg class="pc ${pc === pc.toUpperCase() ? 'w' : 'b'}" viewBox="0 0 100 100" aria-hidden="true"><use href="#pc-${pc.toLowerCase()}"/></svg>`;
+  function draw(b, o) {
+    cur = b;
+    orient = state.settings.side;
+    for (let i = 0; i < 64; i++) {
+      const sq = sqAt(i), c = cells[i], f = sq & 7, r = sq >> 3;
+      c.dataset.sq = sq;
+      c.className = 'sq ' + ((f + r) % 2 ? 'lt' : 'dk');
+      if (o.last && (o.last.from === sq || o.last.to === sq)) c.classList.add('last');
+      const pc = b[sq];
+      let h = pc ? pieceSvg(pc) : '';
+      if (i % 8 === 0) h += `<span class="co rk">${r + 1}</span>`;
+      if (i >= 56) h += `<span class="co fl">${'abcdefgh'[f]}</span>`;
+      c.innerHTML = h;
+    }
+    setArrow(o.arrow || null);
+    if (o.mark) mark(o.mark.sq, o.mark.kind);
+  }
+  function center(sq) { const i = idxOf(sq); return [(i % 8) * 100 + 50, Math.floor(i / 8) * 100 + 50]; }
+  function setArrow(a) {
+    if (!a) { arrowSvg.innerHTML = ''; return; }
+    const [x1, y1] = center(a.from), [x2, y2] = center(a.to);
+    const ang = Math.atan2(y2 - y1, x2 - x1), hl = 34, hw = 26;
+    const bx = x2 - Math.cos(ang) * hl, by = y2 - Math.sin(ang) * hl;
+    const px = Math.sin(ang) * hw, py = -Math.cos(ang) * hw;
+    arrowSvg.innerHTML = `<g class="arrow ${a.kind}"><line x1="${x1}" y1="${y1}" x2="${bx}" y2="${by}" stroke-width="16" stroke-linecap="round"/><polygon points="${x2},${y2} ${bx + px},${by + py} ${bx - px},${by - py}"/></g>`;
+  }
+  function mark(sq, kind) {
+    const c = cells[idxOf(sq)];
+    if (!c) return;
+    const m = document.createElement('span');
+    m.className = 'mark ' + kind;
+    m.textContent = kind === 'bad' ? '✕' : '✓';
+    c.appendChild(m);
+  }
+  function flashMark(sq, kind) { mark(sq, kind); setTimeout(() => $$('.mark.' + kind, el).forEach(x => x.remove()), 650); }
+  function showWrong(m, b) {
+    const tmp = b.slice(); tmp[m.to] = tmp[m.from]; tmp[m.from] = null;
+    draw(tmp, {});
+    cells[idxOf(m.from)].classList.add('wrongsq'); cells[idxOf(m.to)].classList.add('wrongsq');
+    mark(m.to, 'bad');
+    S.awaiting = false;
+    setTimeout(() => {
+      if (!S) return;
+      const arrowNow = arrowSvg.innerHTML;
+      draw(b, { last: S.shownLast });
+      arrowSvg.innerHTML = arrowNow;
+      S.awaiting = true;
+    }, 700);
+  }
+  function animate(from, to) {
+    const c = cells[idxOf(to)], f = cells[idxOf(from)];
+    const p = c && c.querySelector('.pc');
+    if (!p || !f || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const a = f.getBoundingClientRect(), z = c.getBoundingClientRect();
+    p.style.transition = 'none';
+    p.style.transform = `translate(${a.left - z.left}px, ${a.top - z.top}px)`;
+    p.getBoundingClientRect();
+    p.style.transition = 'transform 220ms cubic-bezier(.3,.7,.3,1)';
+    p.style.transform = '';
+  }
+  function select(sq, targets) {
+    $$('.sel,.tgt,.tgtc', el).forEach(c => c.classList.remove('sel', 'tgt', 'tgtc'));
+    if (sq == null) return;
+    cells[idxOf(sq)].classList.add('sel');
+    for (const t of targets) cells[idxOf(t)].classList.add(cur[t] ? 'tgtc' : 'tgt');
+  }
+  function highlightFrom(sq) { const c = cells[idxOf(sq)]; c.classList.remove('pulse'); void c.offsetWidth; c.classList.add('pulse'); }
+
+  // input: tap or drag
+  let drag = null;
+  const sqFromPoint = (x, y) => { const t = document.elementFromPoint(x, y); const c = t && t.closest && t.closest('.sq'); return c && el.contains(c) ? +c.dataset.sq : null; };
+  const ownPiece = sq => cur && cur[sq] && ((cur[sq] === cur[sq].toUpperCase()) === (state.settings.side === 'w'));
+  const targetsFrom = sq => S ? S.legal.filter(m => m.from === sq).map(m => m.to) : [];
+  function tryMove(from, to) {
+    if (!S) return;
+    const cands = S.legal.filter(m => m.from === from && m.to === to);
+    select(null);
+    S.selected = null;
+    if (!cands.length) return;
+    let m = cands[0];
+    if (cands.length > 1) { const want = S.entry.my.find(x => x.from === from && x.to === to); m = cands.find(c => c.promo === (want ? want.promo : 'q')) || cands.find(c => c.promo === 'q'); }
+    attemptMove(m);
+  }
+  el.addEventListener('pointerdown', e => {
+    if (!S || !S.awaiting) return;
+    const sq = sqFromPoint(e.clientX, e.clientY);
+    if (sq == null) return;
+    e.preventDefault();
+    if (S.selected != null && S.selected !== sq && targetsFrom(S.selected).includes(sq)) return tryMove(S.selected, sq);
+    if (ownPiece(sq)) {
+      S.selected = sq;
+      select(sq, targetsFrom(sq));
+      const pc = cells[idxOf(sq)].querySelector('.pc');
+      const rect = cells[idxOf(sq)].getBoundingClientRect();
+      const ghost = document.createElement('div');
+      ghost.className = 'ghost';
+      ghost.style.width = ghost.style.height = rect.width * 1.15 + 'px';
+      ghost.innerHTML = pc ? pc.outerHTML : '';
+      drag = { from: sq, ghost, pc, moved: false, x: e.clientX, y: e.clientY, size: rect.width * 1.15 };
+      try { el.setPointerCapture(e.pointerId); } catch (_) {}
+    } else { S.selected = null; select(null); }
+  });
+  el.addEventListener('pointermove', e => {
+    if (!drag) return;
+    if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return;
+    if (!drag.moved) { drag.moved = true; document.body.appendChild(drag.ghost); if (drag.pc) drag.pc.style.opacity = '0.25'; }
+    drag.ghost.style.transform = `translate(${e.clientX - drag.size / 2}px, ${e.clientY - drag.size / 2}px)`;
+  });
+  const endDrag = e => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    d.ghost.remove();
+    if (d.pc) d.pc.style.opacity = '';
+    if (!d.moved || !e) return;
+    const to = sqFromPoint(e.clientX, e.clientY);
+    if (to != null && to !== d.from) tryMove(d.from, to);
+  };
+  el.addEventListener('pointerup', endDrag);
+  el.addEventListener('pointercancel', () => endDrag(null));
+
+  return { set: (b, o = {}) => { draw(b, o); if (o.animate && o.last) animate(o.last.from, o.last.to); }, setArrow, flashMark, showWrong, animate, highlightFrom, select };
+})();
+
+function miniBoard(fen, side, last, exp) {
+  const p = Chess0.parse(fen);
+  let h = '<div class="mini">';
+  for (let i = 0; i < 64; i++) {
+    const r = Math.floor(i / 8), f = i % 8;
+    const sq = side === 'w' ? (7 - r) * 8 + f : r * 8 + (7 - f);
+    const pc = p.b[sq];
+    const cls = ((sq & 7) + (sq >> 3)) % 2 ? 'lt' : 'dk';
+    const hl = last && (last.from === sq || last.to === sq) ? ' last' : '';
+    const ex = exp && (exp.from === sq || exp.to === sq) ? ' exp' : '';
+    h += `<div class="sq ${cls}${hl}${ex}">${pc ? `<svg class="pc ${pc === pc.toUpperCase() ? 'w' : 'b'}" viewBox="0 0 100 100"><use href="#pc-${pc.toLowerCase()}"/></svg>` : ''}</div>`;
+  }
+  return h + '</div>';
+}
+
+// ---------- drill chrome ----------
+function setPrompt(text, kind) { const p = $('#prompt'); p.textContent = text; p.dataset.kind = kind || ''; }
+function drillProgress() {
+  if (!S) return;
+  const t = S.events.filter(e => !e.intro);
+  const intros = S.events.length - t.length;
+  const left = S.kind === 'weak' || S.kind === 'mix' || S.kind === 'games' ? S.forced.length + S.queue.length + (S.awaiting ? 1 : 0) : 0;
+  $('#prog-n').textContent = `${S.count} move${S.count === 1 ? '' : 's'}${intros ? ` · ${intros} new` : ''}${left ? ` · ${left} left` : ''}`;
+  $('#prog-acc').textContent = t.length ? `${pct(t.filter(e => e.ok).length, t.length)}% first try` : '';
+}
+function drillChrome() {
+  const e = S.entry, r = state.cards[e.id];
+  const tag = $('#d-tag');
+  tag.textContent = S.intro ? 'New move' : S.kind === 'cold' ? 'Cold start' : S.kind === 'weak' ? 'Weak spot' : S.kind === 'mix' ? 'Mix-up' : S.kind === 'games' ? 'From your game' : r && r.s === 'relearn' ? 'Retry' : r && r.s === 'learn' ? 'Check' : S.extra ? 'Extra practice' : 'Review';
+  tag.dataset.kind = S.intro ? 'new' : 'rev';
+  $('#d-chapter').textContent = chapterLabel(e);
+  const lastMv = e.path.length ? e.path[e.path.length - 1] : null;
+  $('#d-line').innerHTML = S.kind === 'cold' ? 'Cold start: no move list. Find your move from the board alone.' : e.path.length ? esc(Core.fmtPath(e.path, 14)) + ' <span class="q">?</span>' : 'Starting position <span class="q">?</span>';
+  setPrompt(S.intro ? 'New move: play the move shown by the arrow.' : S.kind === 'cold' ? 'Your move.' : lastMv ? `${lastMv.turn === 'w' ? 'White' : 'Black'} played ${lastMv.san}. Your move.` : 'Your move.', S.intro ? 'new' : '');
+  const gm = S.kind === 'games' && state.gameMistakes[e.id];
+  if (gm) {
+    const n = $('#d-note');
+    n.textContent = `From your game vs ${gm.opp}${gm.date ? ' (' + gm.date + ')' : ''}: you didn’t find your prep move here${gm.count > 1 ? ` (${gm.count} games)` : ''}. Solved ${gm.streak || 0} of 3 days.`;
+    n.hidden = false;
+  } else $('#d-note').hidden = true;
+  drillProgress();
+}
+function showComment(e) {
+  const n = $('#d-note');
+  if (e.comment) { n.textContent = e.comment; n.hidden = false; } else n.hidden = true;
+}
+
+// ---------- views ----------
+let view = 'train', trainMode = 'home';
+function showView(v) {
+  view = v;
+  $('#app').classList.toggle('wide', v === 'map');
+  $$('.view').forEach(x => { x.hidden = x.id !== 'v-' + v; });
+  $$('.tabs button').forEach(b => b.setAttribute('aria-current', b.dataset.v === v ? 'page' : 'false'));
+  if (v === 'train' && S) trainMode = 'drill';
+  render();
+}
+function render() {
+  $('#side-label').textContent = state.settings.side === 'w' ? 'White' : 'Black';
+  $('#side-btn').dataset.side = state.settings.side;
+  if (view === 'train') renderTrain();
+  if (view === 'library') renderLibrary();
+  if (view === 'progress') { renderProgress(); showLastBackup(); }
+  if (view === 'games') renderGames();
+  if (view === 'map') {
+    const k = [state.settings.side, JSON.stringify(mapSet()), mapUI.root.join(' '), repVersion, Li.token ? 1 : 0].join('|');
+    if (k !== mapUI.key) { mapUI.key = k; mapUI.sel = mapUI.sel.length && mapUI.keySide === state.settings.side ? mapUI.sel : []; mapUI.keySide = state.settings.side; refreshMap(); }
+    else renderMap();
+  }
+}
+function renderTrain() {
+  $('#t-home').hidden = trainMode !== 'home';
+  $('#t-drill').hidden = trainMode !== 'drill';
+  $('#t-sum').hidden = trainMode !== 'summary';
+  if (trainMode === 'home') renderHome();
+  if (trainMode === 'summary') renderSummary();
+}
+const seg = (name, opts, val) => `<div class="seg" role="radiogroup" data-set="${name}">` + opts.map(([v, l]) => `<button type="button" role="radio" aria-checked="${String(v) === String(val)}" data-val="${v}">${l}</button>`).join('') + '</div>';
+function focusOptions(side) {
+  const st = state.settings;
+  let h = `<option value="">All ${side === 'w' ? 'White' : 'Black'} studies and chapters</option>`;
+  for (const s of state.studies) {
+    const chs = state.chapters.filter(c => c.studyId === s.id && c.side === side && c.enabled);
+    if (!chs.length) continue;
+    h += `<optgroup label="${esc(s.name)}"><option value="s:${esc(s.id)}" ${st.focus === 's:' + s.id ? 'selected' : ''}>Whole study: ${esc(s.name)}</option>`;
+    h += chs.map(c => `<option value="c:${esc(c.id)}" ${st.focus === 'c:' + c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('') + '</optgroup>';
+  }
+  return h;
+}
+function renderHome() {
+  const st = state.settings, scope = cardsInScope(), now = Date.now();
+  const due = scope.filter(c => state.cards[c.id] && state.cards[c.id].d <= now).length;
+  const fresh = scope.filter(c => !state.cards[c.id]).length;
+  const mastered = scope.filter(c => status(c) === 'mastered').length;
+  const learned = scope.length - fresh;
+  const sideChapters = state.chapters.filter(c => c.side === st.side);
+  const onlyExamples = state.studies.length && state.studies.every(s => s.example);
+  $('#t-home').innerHTML = `
+    ${onlyExamples ? `<div class="notice"><b>These are example chapters</b> so you can try the trainer now. When you’re ready, go to <button class="link" data-go="library">Library</button> and import your Lichess study.</div>` : ''}
+    ${!sideChapters.length ? `<div class="notice">You have no chapters for ${st.side === 'w' ? 'White' : 'Black'} yet. Import them in <button class="link" data-go="library">Library</button>, or switch colour at the top.</div>` : ''}
+    <div class="tiles">
+      <div class="tile"><span class="n">${due}</span><span class="l">Due for review</span></div>
+      <div class="tile"><span class="n">${fresh}</span><span class="l">New to learn</span></div>
+      <div class="tile"><span class="n">${learned}</span><span class="l">Started</span></div>
+      <div class="tile"><span class="n">${mastered}</span><span class="l">Mastered</span></div>
+    </div>
+    <div class="meter"><div style="width:${pct(learned, scope.length)}%"></div></div>
+    <p class="cap">${scope.length} positions where it’s your move · ${pct(learned, scope.length)}% started</p>
+    <div class="panel">
+      <label class="lbl" for="focus">What to train</label>
+      <select id="focus">${focusOptions(st.side)}</select>
+      <span class="lbl">How positions are served</span>
+      ${seg('mode', [['mixed', 'Mixed positions'], ['lines', 'Full lines from move 1']], st.mode)}
+      <p class="cap">${st.mode === 'mixed' ? 'Drops you into positions a few moves deep, plays a few moves, then jumps to another chapter.' : 'Plays each line from move 1 to the end, then moves on to a line from another chapter.'}</p>
+      <button class="primary" id="start" ${scope.length ? '' : 'disabled'}>Start training</button>
+      <p class="cap">Train for as long as you like and tap <b>End</b> when you’re done. New moves are shown once with an arrow, then you’re tested on them. Wrong answers come back a few positions later.</p>
+    </div>
+    ${drillsHtml()}`;
+  $('#start').addEventListener('click', () => startSession());
+  $$('.drill', $('#t-home')).forEach(b => b.addEventListener('click', () => openDrill(b.dataset.drill)));
+  $('#focus').addEventListener('change', e => { st.focus = e.target.value; touch('meta'); renderHome(); });
+  bindSegs($('#t-home'));
+}
+const DRILLS = {
+  cold: { name: 'Cold start', desc: 'Dropped straight into random positions you’ve learned, with no move list. Find the move from the board alone.' },
+  weak: { name: 'Weak spots', desc: 'Only the positions you’ve missed two or more times, spread across chapters.' },
+  mix: { name: 'Mix-ups', desc: 'Look-alike positions you’ve confused with each other, drilled back to back so you learn the difference.' },
+  games: { name: 'From my games', desc: 'Positions where you left your prep in real games. Each one graduates after you solve it on 3 different days.' }
+};
+function drillCount(kind, study) {
+  const cards = drillScope(study);
+  if (kind === 'cold') return cards.filter(started).length;
+  if (kind === 'weak') return weakList(cards).length;
+  if (kind === 'games') return gameList(cards).length;
+  return mixPairs(cards).length;
+}
+function drillsHtml() {
+  const unit = { cold: ['learned', 'learned'], weak: ['position', 'positions'], mix: ['pair', 'pairs'], games: ['position', 'positions'] };
+  return `<h3 class="h3">Focused drills</h3><div class="drills">${Object.entries(DRILLS).map(([k, d]) => {
+    const n = drillCount(k, '');
+    return `<button class="drill" type="button" data-drill="${k}" ${n ? '' : 'disabled'}><span class="dr-t"><span class="dr-n">${d.name}</span><span class="dr-c">${n} ${unit[k][n === 1 ? 0 : 1]}</span></span><span class="dr-d">${n ? d.desc : k === 'cold' ? 'Unlocks once you’ve learned some moves.' : k === 'weak' ? 'Nothing yet. Positions you miss twice show up here.' : k === 'games' ? 'Nothing yet. Run Game check and every position where you left your prep lands here.' : 'Nothing yet. When you play a move that belongs to a similar position, it’s caught here.'}</span></button>`;
+  }).join('')}</div><div id="picker" hidden></div>`;
+}
+function openDrill(kind) {
+  const studies = state.studies.filter(s => drillCount(kind, s.id) > 0);
+  if (studies.length <= 1) return startSession({ kind, study: studies[0]?.id || '' });
+  const pk = $('#picker');
+  pk.innerHTML = `<p class="lbl">${DRILLS[kind].name}: which study?</p><div class="pick">
+    <button class="ghostbtn" data-s="">All studies <span class="cap">${drillCount(kind, '')}</span></button>
+    ${studies.map(s => `<button class="ghostbtn" data-s="${esc(s.id)}">${esc(s.name)} <span class="cap">${drillCount(kind, s.id)}</span></button>`).join('')}
+    </div>`;
+  pk.hidden = false;
+  $$('[data-s]', pk).forEach(b => b.onclick = () => startSession({ kind, study: b.dataset.s }));
+  pk.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+function bindSegs(root) {
+  $$('.seg', root).forEach(g => g.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    state.settings[g.dataset.set] = b.dataset.val;
+    touch('meta');
+    render();
+  }));
+}
+function renderSummary() {
+  const s = lastSummary;
+  if (!s) { trainMode = 'home'; return renderTrain(); }
+  const acc = pct(s.correct, s.tests);
+  const mins = Math.max(1, Math.round(s.dur / 60000));
+  const maxB = Math.max(1, ...s.buckets.map(b => b.tests));
+  $('#t-sum').innerHTML = `
+    <h2 class="h">${{ cold: 'Cold start report', weak: 'Weak spots report', mix: 'Mix-ups report', games: 'From my games report' }[s.kind] || 'Session report'}</h2>
+    <div class="score">
+      <div class="ring" style="--p:${acc}"><span>${s.tests ? acc + '%' : '—'}</span></div>
+      <div class="score-text">
+        <p><b>${s.correct} of ${s.tests}</b> review positions right first time.</p>
+        <p>${s.intros} new move${s.intros === 1 ? '' : 's'} learned · ${mins} min${s.avgMs ? ' · ' + (s.avgMs / 1000).toFixed(1) + 's average answer' : ''}</p>
+      </div>
+    </div>
+    <h3 class="h3">What to work on</h3>
+    <ol class="recs">${s.recs.map(r => `<li><p>${r.text}</p>${r.action ? (r.action.kind ? `<button class="ghostbtn" data-kind="${r.action.kind}">${esc(r.action.label)}</button>` : `<button class="ghostbtn" data-focus="${esc(r.action.focus)}">${esc(r.action.label)}</button>`) : ''}</li>`).join('')}</ol>
+    ${s.trouble.length ? `<h3 class="h3">Positions you missed</h3>
+      <div class="trouble">${s.trouble.slice(0, 8).map(t => {
+        const c = rep.byId.get(t.id); if (!c) return '';
+        return `<div class="tr">${miniBoard(c.fen, s.side, c.last, c.my[0])}<div class="tr-t"><p class="mono">${esc(Core.fmtPath(c.path, 8)) || 'Start'}</p>
+          <p><span class="bad">${t.wrong.length ? 'You tried ' + esc(t.wrong.join(', ')) : 'Used a hint'}</span></p><p><span class="good">Repertoire: ${esc(t.exp.join(' or '))}</span></p>
+          ${t.cx ? `<p class="cap mix">Mix-up with ${esc(t.cx)}</p>` : ''}<p class="cap">${esc(chapterLabel(c))}${t.misses > 1 ? ` · missed ${t.misses}×` : ''}</p></div></div>`;
+      }).join('')}</div>
+      <button class="primary" id="redo">Practise these ${Math.min(8, s.trouble.length)} again now</button>` : ''}
+    ${s.chapters.length ? `<h3 class="h3">By chapter</h3>
+      <div class="table"><table><thead><tr><th>Chapter</th><th class="num">Tested</th><th class="num">Errors</th><th class="num">Right</th></tr></thead><tbody>
+      ${s.chapters.map(c => `<tr><td>${esc(c.name)}</td><td class="num">${c.tests}</td><td class="num">${c.errors}</td><td class="num"><span class="pill ${c.errors / c.tests > 0.25 ? 'r' : c.errors ? 'y' : 'g'}">${pct(c.tests - c.errors, c.tests)}%</span></td></tr>`).join('')}
+      </tbody></table></div>` : ''}
+    ${s.tests ? `<h3 class="h3">Accuracy by depth</h3>
+      <div class="bars">${s.buckets.map(b => `<div class="bar-row"><span class="bl">${b.label}</span><div class="bt"><div class="bf" style="width:${pct(b.tests, maxB)}%"><div class="bo" style="width:${pct(b.ok, b.tests)}%"></div></div></div><span class="bv">${b.tests ? pct(b.ok, b.tests) + '%' : '—'}</span></div>`).join('')}</div>
+      <p class="cap">Bar length is how many positions you saw at that depth; the filled part is how many you got right first time.</p>` : ''}
+    <div class="coach" id="coach" hidden>
+      <h3 class="h3">Coach’s analysis</h3>
+      <p class="cap">Claude reads this session’s results plus your all-time chapter stats and writes a plan.</p>
+      <button class="ghostbtn" id="coach-btn">Ask Claude for an analysis</button>
+      <div id="coach-out" class="coach-out" hidden></div>
+    </div>
+    <div class="row"><button class="primary" id="again">Keep training</button><button class="ghostbtn" id="home">Done</button></div>`;
+  $('#again').onclick = () => startSession();
+  $('#home').onclick = () => { trainMode = 'home'; render(); };
+  $('#redo') && ($('#redo').onclick = () => startSession({ forced: s.trouble.slice(0, 8).map(t => t.id) }));
+  $$('[data-focus]', $('#t-sum')).forEach(b => b.onclick = () => { state.settings.focus = b.dataset.focus; touch('meta'); startSession(); });
+  $$('[data-kind]', $('#t-sum')).forEach(b => b.onclick = () => startSession({ kind: b.dataset.kind }));
+  setupCoach(s);
+}
+async function setupCoach(s) {
+  const C = window.claude;
+  if (!C || !C.use || !s.tests) return;
+  const sample = await C.use('sample');
+  if (!sample || lastSummary !== s) return;
+  const box = $('#coach');
+  if (!box) return;
+  box.hidden = false;
+  $('#coach-btn').onclick = async () => {
+    const out = $('#coach-out');
+    out.hidden = false; out.textContent = 'Thinking…';
+    $('#coach-btn').disabled = true;
+    const life = chapterStats(s.side).filter(c => c.total).map(c => ({ chapter: chName(c.id), positions: c.total, started: c.learned, mastered: c.mastered, dueNow: c.due, lifetimeRight: c.ok, lifetimeWrong: c.bad }));
+    const data = {
+      colour: s.side === 'w' ? 'White' : 'Black', minutes: Math.round(s.dur / 60000), reviewed: s.tests, rightFirstTime: s.correct, newMovesLearned: s.intros,
+      slowAnswersOver10s: s.slow, byDepth: s.buckets, byChapter: s.chapters.map(c => ({ chapter: c.name, tested: c.tests, errors: c.errors })),
+      missed: s.trouble.slice(0, 10).map(t => { const c = rep.byId.get(t.id); return { line: c ? Core.fmtPath(c.path) : '', played: t.wrong, correct: t.exp, timesMissed: t.misses, lifetimeLapses: state.cards[t.id]?.l || 0 }; }),
+      allTimeChapters: life, recentSessions: state.sessions.filter(x => x.side === s.side).slice(-8).map(x => ({ date: new Date(x.at).toISOString().slice(0, 10), reviewed: x.tests, right: x.correct }))
+    };
+    const prompt = `You are an encouraging but direct chess coach helping a club player memorise their opening repertoire with a spaced-repetition trainer. Below is JSON data from the session they just finished, plus all-time stats.\n\nWrite a detailed analysis in plain text (no markdown symbols like # or **). Use short labelled sections: "Overall", "Patterns in your mistakes", "Chapters to prioritise", "Plan for the next 7 days". In "Patterns", look at the actual moves they played versus the repertoire move and say what the confusion likely is (for example mixing up two similar lines, playing a natural-looking move, move-order slips, or a transposition). Be concrete and refer to the moves. Keep it under 350 words.\n\nDATA:\n${JSON.stringify(data)}`;
+    try {
+      await sample(prompt, { onText: ({ text }) => { out.textContent = text; } });
+    } catch (e) {
+      out.textContent = e && e.code === 'rate_limited' ? 'Claude is busy right now. Try again in a minute.' : e && e.code === 'not_granted' ? 'The coach needs your permission to ask Claude. You can allow it from this page’s permissions menu.' : 'Couldn’t get an analysis this time.';
+    }
+    $('#coach-btn').disabled = false;
+    $('#coach-btn').textContent = 'Ask again';
+  };
+}
+
+// ---------- library ----------
+function studyProgress(sid) {
+  const ids = new Set();
+  for (const sd of ['w', 'b']) {
+    const r = sd === rep.side ? rep : buildSide(sd);
+    r.cards.forEach(c => { if (c.study === sid) ids.add(c.id); });
+  }
+  let started = 0;
+  ids.forEach(id => { if (state.cards[id]) started++; });
+  return { total: ids.size, started, ids };
+}
+function renderLibrary() {
+  const counts = {};
+  for (const sd of ['w', 'b']) {
+    const r = sd === rep.side ? rep : buildSide(sd);
+    for (const card of r.cards) for (const ch of card.chapters) counts[ch] = (counts[ch] || 0) + 1;
+  }
+  $('#lib-list').innerHTML = !state.studies.length ? '<p class="cap">No studies yet. Import one above.</p>' : state.studies.map(st => {
+    const chs = state.chapters.filter(c => c.studyId === st.id);
+    const pr = studyProgress(st.id);
+    return `<div class="study" data-sid="${esc(st.id)}">
+      <div class="study-h"><div class="ch-t"><span class="study-n">${esc(st.name)}</span>
+        <span class="cap">${chs.length} chapter${chs.length === 1 ? '' : 's'} · ${pr.started} of ${pr.total} positions started${st.example ? ' · example' : st.importedAt ? ' · imported ' + new Date(st.importedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : ''}</span></div></div>
+      <div class="meter sm"><div style="width:${pct(pr.started, pr.total)}%"></div></div>
+      ${chs.map(c => `<div class="ch" data-id="${esc(c.id)}">
+        <label class="tog"><input type="checkbox" id="en-${esc(c.id)}" ${c.enabled ? 'checked' : ''} data-act="toggle"><span></span></label>
+        <div class="ch-t"><span class="ch-n">${esc(c.name)}</span><span class="cap">${counts[c.id] || 0} positions to learn</span></div>
+        <button class="sidechip" data-act="side" title="Change colour">${c.side === 'w' ? 'White' : 'Black'}</button>
+      </div>`).join('')}
+      <div class="study-a">
+        <label class="filebtn small"><input type="file" data-act="replace" accept=".pgn,.txt,text/plain,application/x-chess-pgn,application/vnd.chess-pgn"><span class="ghostbtn">Replace with updated PGN</span></label>
+        <button class="ghostbtn" data-act="reset">Reset progress</button>
+        <button class="x" data-act="del">Delete study</button>
+      </div>
+      <div class="confirm" hidden></div>
+    </div>`;
+  }).join('');
+}
+function confirmIn(studyEl, html, onYes) {
+  const box = $('.confirm', studyEl);
+  box.innerHTML = html + ' <div class="row tight"><button class="dangerbtn" data-yes>Yes</button><button class="ghostbtn" data-no>Cancel</button></div>';
+  box.hidden = false;
+  $('[data-yes]', box).onclick = onYes;
+  $('[data-no]', box).onclick = () => { box.hidden = true; };
+}
+// card ids look like  <side><studyId>_<position>, so a study's progress can be found and cleared on its own
+function resetStudy(sid) {
+  const ids = Object.keys(state.cards).filter(id => id.slice(1).startsWith(sid + '_'));
+  ids.forEach(id => delete state.cards[id]);
+  touch('cards', ids);
+}
+function deleteStudy(sid) {
+  resetStudy(sid);
+  const gone = state.chapters.filter(c => c.studyId === sid).map(c => c.id);
+  state.chapters = state.chapters.filter(c => c.studyId !== sid);
+  state.studies = state.studies.filter(s => s.id !== sid);
+  if (state.settings.focus) state.settings.focus = '';
+  touch('removed', gone);
+}
+// put new chapters into a study (replacing anything it had) and start its progress fresh
+function fillStudy(sid, chs, forced) {
+  resetStudy(sid);
+  const old = state.chapters.filter(c => c.studyId === sid).map(c => c.id);
+  state.chapters = state.chapters.filter(c => c.studyId !== sid);
+  touch('removed', old);
+  const added = chs.map(c => ({ id: uid('c'), studyId: sid, name: c.name, side: forced === 'auto' ? (c.orientation || 'w') : forced, pgn: c.pgn, enabled: true }));
+  state.chapters.push(...added);
+  touch('chapter', added.map(c => c.id));
+  const st = studyOf(sid); if (st) st.importedAt = Date.now();
+  return added;
+}
+
+// ---------- import ----------
+let pending = null;
+async function readImport() {
+  let text = $('#imp-text').value.trim();
+  const file = $('#imp-file').files[0];
+  if (file) text = (await file.text()) + (text ? '\n\n' + text : '');
+  return { text, fileName: file ? file.name.replace(/\.(pgn|txt)$/i, '') : '' };
+}
+function parseImport(text) {
+  let chs;
+  try { chs = Core.splitChapters(text); } catch (e) { chs = []; }
+  return chs.filter(c => c.moves > 0);
+}
+async function doImport() {
+  const msg = $('#imp-msg');
+  const { text, fileName } = await readImport();
+  if (!text) { msg.innerHTML = '<span class="bad">Choose a .pgn file or paste PGN text first.</span>'; return; }
+  const chs = parseImport(text);
+  if (!chs.length) { msg.innerHTML = '<span class="bad">No chess moves found. Make sure you exported the study as PGN (it should start with lines like [Event "…"] followed by moves like 1. e4).</span>'; return; }
+  const name = ($('#imp-name').value.trim()) || chs.find(c => c.study)?.study || fileName || 'My study';
+  const forced = $('#imp-side').value;
+  const same = state.studies.find(s => !s.example && s.name.toLowerCase() === name.toLowerCase());
+  if (same) {
+    pending = { chs, name, forced, sid: same.id };
+    msg.innerHTML = `<div class="notice warn">You already have a study called <b>${esc(name)}</b>. Replace it with this PGN and start its progress over? Your other studies aren’t affected.
+      <div class="row tight"><button class="dangerbtn" id="imp-replace">Replace and restart</button><button class="ghostbtn" id="imp-both">Keep both</button></div></div>`;
+    $('#imp-replace').onclick = () => finishImport(true);
+    $('#imp-both').onclick = () => finishImport(false);
+    return;
+  }
+  pending = { chs, name, forced, sid: null };
+  finishImport(false);
+}
+function finishImport(replace) {
+  const { chs, forced } = pending;
+  let { name, sid } = pending;
+  pending = null;
+  const examples = state.studies.filter(s => s.example).map(s => s.id);
+  examples.forEach(deleteStudy);
+  if (!replace) {
+    let n = name, k = 2;
+    while (state.studies.some(s => s.name.toLowerCase() === n.toLowerCase())) n = `${name} (${k++})`;
+    sid = uid('s');
+    state.studies.push({ id: sid, name: n, importedAt: Date.now() });
+    name = n;
+  }
+  const added = fillStudy(sid, chs, forced);
+  const sides = new Set(added.map(c => c.side));
+  if (!sides.has(state.settings.side) && sides.size === 1) state.settings.side = [...sides][0];
+  rebuild();
+  const w = [];
+  for (const sd of sides) w.push(...(sd === rep.side ? rep : buildSide(sd)).warnings.filter(x => x.startsWith(name + ' ›')));
+  const pr = studyProgress(sid);
+  $('#imp-msg').innerHTML = `<span class="good">${replace ? 'Replaced' : 'Imported'} “${esc(name)}”: ${added.length} chapter${added.length === 1 ? '' : 's'}, ${pr.total} positions to learn.</span>${replace ? ' Its progress starts fresh.' : ''}` +
+    (w.length ? `<details><summary>${w.length} move${w.length > 1 ? 's' : ''} couldn’t be read</summary><ul>${w.slice(0, 30).map(x => `<li>${esc(x)}</li>`).join('')}</ul></details>` : '');
+  $('#imp-text').value = ''; $('#imp-file').value = ''; $('#imp-name').value = '';
+  $('#imp-fname').textContent = 'No file chosen';
+  render();
+}
+async function replaceFromFile(sid, file) {
+  const st = studyOf(sid);
+  const chs = parseImport(await file.text());
+  const studyEl = $(`.study[data-sid="${CSS.escape(sid)}"]`);
+  if (!chs.length) { confirmIn(studyEl, '<span class="bad">No chess moves found in that file.</span>', () => { $('.confirm', studyEl).hidden = true; }); return; }
+  confirmIn(studyEl, `Replace <b>${esc(st.name)}</b> with ${chs.length} chapter${chs.length === 1 ? '' : 's'} from “${esc(file.name)}” and start its progress over?`, () => {
+    fillStudy(sid, chs, 'auto');
+    rebuild(); render();
+  });
+}
+
+// ---------- progress ----------
+function renderProgress() {
+  const side = state.settings.side;
+  const rows = chapterStats(side).filter(r => r.total);
+  const sess = state.sessions.filter(s => s.side === side).slice(-15).reverse();
+  const totalOk = rows.reduce((a, r) => a + r.ok, 0), totalBad = rows.reduce((a, r) => a + r.bad, 0);
+  const byStudy = state.studies.map(st => ({ st, rows: rows.filter(r => r.studyId === st.id).sort((a, b) => (b.bad / Math.max(1, b.ok + b.bad)) - (a.bad / Math.max(1, a.ok + a.bad))) })).filter(g => g.rows.length);
+  $('#p-body').innerHTML = `
+    <div class="tiles">
+      <div class="tile"><span class="n">${state.sessions.filter(s => s.side === side).length}</span><span class="l">Sessions</span></div>
+      <div class="tile"><span class="n">${totalOk + totalBad ? pct(totalOk, totalOk + totalBad) + '%' : '—'}</span><span class="l">Lifetime accuracy</span></div>
+    </div>
+    ${byStudy.length ? byStudy.map(g => `<h3 class="h3">${esc(g.st.name)}</h3><p class="cap">Chapters, weakest first</p><div class="chs">${g.rows.map(r => {
+      const acc = r.ok + r.bad ? pct(r.ok, r.ok + r.bad) : null;
+      return `<div class="pr">
+        <div class="pr-h"><span class="ch-n">${esc(r.name)}</span>${acc == null ? '<span class="pill n">not tested</span>' : `<span class="pill ${acc < 75 ? 'r' : acc < 90 ? 'y' : 'g'}">${acc}% right</span>`}</div>
+        <div class="stack"><div class="m" style="width:${pct(r.mastered, r.total)}%"></div><div class="s" style="width:${pct(r.learned - r.mastered, r.total)}%"></div></div>
+        <p class="cap">${r.learned} of ${r.total} started · ${r.mastered} mastered · ${r.due} due now · ${r.bad} mistakes all time</p>
+      </div>`; }).join('')}</div>`).join('') + `<p class="cap legend"><i class="k m"></i> mastered (21+ day interval) <i class="k s"></i> started <i class="k e"></i> not started</p>`
+      : '<p class="cap">Import a study and train to see progress here.</p>'}
+    <h3 class="h3">Recent sessions</h3>
+    ${sess.length ? `<div class="table"><table><thead><tr><th>Date</th><th class="num">Reviewed</th><th class="num">Right</th><th class="num">New</th></tr></thead><tbody>
+      ${sess.map(s => `<tr><td>${new Date(s.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} ${new Date(s.at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</td><td class="num">${s.tests}</td><td class="num">${s.tests ? pct(s.correct, s.tests) + '%' : '—'}</td><td class="num">${s.intros}</td></tr>`).join('')}
+      </tbody></table></div>` : '<p class="cap">No sessions yet.</p>'}`;
+}
+
+
+// ---------- game check: compare real games with your studies ----------
+function gameMainline(g) { const out = []; let n = g.root; while (n.children.length) { n = n.children[0]; out.push(n.san); } return out; }
+function walkGame(moves, side, R) {
+  let pos = Chess0.parse(Chess0.START), last = null;
+  const path = [];
+  const nodesAt = p => { const k = Chess0.key(p); return state.studies.map(s => R.nodes.get(s.id + '|' + k)).filter(Boolean); };
+  if (!nodesAt(pos).length) return { kind: 'noprep', ply: 0 };
+  for (let i = 0; i < moves.length; i++) {
+    const nodes = nodesAt(pos);
+    const mv = Chess0.fromSan(pos, moves[i]);
+    if (!mv) return { kind: 'error', ply: i };
+    const mine = pos.turn === side;
+    const list = nodes.flatMap(n => mine ? n.my : n.opp);
+    if (list.some(x => strip(x.san) === strip(mv.san))) {
+      path.push({ san: mv.san, num: pos.full, turn: pos.turn });
+      last = { from: mv.from, to: mv.to };
+      pos = mv.next;
+      continue;
+    }
+    const node = nodes.find(n => (mine ? n.my : n.opp).length) || nodes[0];
+    const cardNode = mine ? node : null;
+    return {
+      kind: !list.length ? 'end' : mine ? 'mistake' : 'surprise', ply: i, played: mv.san,
+      expected: [...new Set(list.map(x => x.san))], fen: Chess0.fen(pos), last, line: Core.fmtPath(path, 12),
+      chapters: [...node.chapters], cardId: cardNode && cardNode.my.length ? side + node.key.slice(0, node.key.indexOf('|')) + '_' + Core.hash(node.key) : null,
+      key: node.key, num: pos.full, turnW: pos.turn === 'w'
+    };
+  }
+  return { kind: 'whole', ply: moves.length, line: Core.fmtPath(path, 12) };
+}
+function analyzeGames(text) {
+  const names = [state.settings.liUser, state.settings.ccUser].filter(Boolean).map(x => x.trim().toLowerCase());
+  const games = Core.parsePgn(text).filter(g => !g.headers.FEN && (!g.headers.Variant || /standard/i.test(g.headers.Variant)));
+  const R = { w: buildSide('w'), b: buildSide('b') };
+  const out = [], want = state.settings.side;
+  let skipped = 0;
+  for (const g of games) {
+    const h = g.headers, moves = gameMainline(g);
+    if (moves.length < 2) continue;
+    const W = (h.White || '').toLowerCase(), B = (h.Black || '').toLowerCase();
+    let colour = names.includes(W) ? 'w' : names.includes(B) ? 'b' : null, guessed = false, res;
+    if (colour) res = walkGame(moves, colour, R[colour]);
+    else {
+      const a = walkGame(moves, 'w', R.w), b = walkGame(moves, 'b', R.b);
+      colour = b.kind !== 'noprep' && (a.kind === 'noprep' || b.ply > a.ply) ? 'b' : 'w';
+      res = colour === 'w' ? a : b; guessed = true;
+    }
+    if (colour !== want) { skipped++; continue; }
+    out.push({ ...res, colour, guessed, total: moves.length, white: h.White || '?', black: h.Black || '?', result: h.Result || '*',
+      date: (h.UTCDate || h.Date || '').replace(/\./g, '-'), url: h.Link || (/^https?:/.test(h.Site || '') ? h.Site : ''),
+      site: /chess\.com/i.test((h.Site || '') + (h.Link || '')) ? 'Chess.com' : /lichess/i.test(h.Site || '') ? 'Lichess' : '' });
+  }
+  out.skipped = skipped;
+  return out;
+}
+function groupBy(list, keyFn) {
+  const m = new Map();
+  for (const x of list) { const k = keyFn(x); if (!m.has(k)) m.set(k, []); m.get(k).push(x); }
+  return [...m.values()].sort((a, b) => b.length - a.length);
+}
+function gameLinks() {
+  const li = (state.settings.liUser || '').trim(), cc = (state.settings.ccUser || '').trim().toLowerCase();
+  const d = new Date(), months = [0, 1].map(k => { const x = new Date(d.getFullYear(), d.getMonth() - k, 1); return [x.getFullYear(), String(x.getMonth() + 1).padStart(2, '0'), x.toLocaleDateString(undefined, { month: 'long' })]; });
+  const side = state.settings.side, col = side === 'w' ? 'White' : 'Black';
+  $('#g-li-links').innerHTML = li ? `<a class="dl" href="https://lichess.org/api/games/user/${encodeURIComponent(li)}?max=200&color=${side === 'w' ? 'white' : 'black'}" target="_blank" rel="noopener">Download my last 200 Lichess games as ${col} ↗</a>` : '';
+  $('#g-cc-links').innerHTML = cc ? months.map(([y, m, nm]) => `<a class="dl" href="https://api.chess.com/pub/player/${encodeURIComponent(cc)}/games/${y}/${m}/pgn" target="_blank" rel="noopener">Download my ${nm} Chess.com games ↗</a>`).join('') + `<span class="cap">Chess.com files include both colours. Only your ${col} games are checked.</span>` : '';
+  $('#g-side').textContent = col;
+  $('#g-fetch').hidden = IN_CLAUDE || (!li && !cc);
+  $('#g-dl-help').hidden = !IN_CLAUDE;
+}
+function renderGames() {
+  if (document.activeElement !== $('#g-li')) $('#g-li').value = state.settings.liUser || '';
+  if (document.activeElement !== $('#g-cc')) $('#g-cc').value = state.settings.ccUser || '';
+  gameLinks();
+  const G = state.gameReport && (state.gameReport.side || state.settings.side) === state.settings.side ? state.gameReport.games : [];
+  const box = $('#g-report');
+  if (!G.length) { box.innerHTML = ''; return; }
+  const inPrep = G.filter(g => g.kind !== 'noprep' && g.kind !== 'error');
+  const mistakes = G.filter(g => g.kind === 'mistake'), surprises = G.filter(g => g.kind === 'surprise');
+  const ends = G.filter(g => g.kind === 'end' && g.ply < g.total);
+  const avg = inPrep.length ? (inPrep.reduce((a, g) => a + g.ply, 0) / inPrep.length / 2).toFixed(1) : '—';
+  const nm = g => g.colour === 'w' ? g.black : g.white;
+  const resultFor = g => g.result === '1/2-1/2' ? 'Draw' : (g.result === '1-0') === (g.colour === 'w') ? (g.result === '*' ? '—' : 'Win') : g.result === '*' ? '—' : 'Loss';
+  const mvLabel = g => `${g.num}${g.turnW ? '.' : '…'}`;
+  const mgroups = groupBy(mistakes, g => g.key);
+  const drillable = { w: [], b: [] };
+  const Rw = { w: buildSide('w'), b: buildSide('b') };
+  mgroups.forEach(gr => { const g = gr[0]; if (g.cardId && Rw[g.colour].byId.has(g.cardId)) drillable[g.colour].push(g.cardId); });
+  const chLine = g => g.chapters && g.chapters.length ? esc(chName(g.chapters[0])) : '';
+  const expMove = g => { const c = g.cardId && Rw[g.colour].byId.get(g.cardId); return c ? c.my[0] : null; };
+  box.innerHTML = `
+    <h3 class="h3">Report <span class="cap">· ${G.length} games · checked ${new Date(state.gameReport.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span></h3>
+    <div class="tiles">
+      <div class="tile"><span class="n">${avg}</span><span class="l">Average moves in prep</span></div>
+      <div class="tile"><span class="n">${mistakes.length}</span><span class="l">Games you left your prep</span></div>
+      <div class="tile"><span class="n">${surprises.length}</span><span class="l">Opponent surprises</span></div>
+      <div class="tile"><span class="n">${ends.length + G.filter(g => g.kind === 'whole').length}</span><span class="l">Played through to the end of prep</span></div>
+    </div>
+    ${G.some(g => g.guessed) ? '<p class="cap">Add your username above so your colour is read from the game rather than guessed.</p>' : ''}
+    ${mgroups.length ? `<h3 class="h3">Where you went wrong</h3><p class="cap">You had a prepared move here but played something else. These are now in your <b>From my games</b> drill on the Train tab.</p>
+      ${['w', 'b'].map(c => drillable[c].length ? `<button class="primary" data-gdrill="${c}">${drillable[c].length > 1 ? `Drill these ${drillable[c].length} positions` : 'Drill this position'} as ${c === 'w' ? 'White' : 'Black'}</button>` : '').join('')}
+      <div class="trouble">${mgroups.slice(0, 15).map(gr => { const g = gr[0]; const played = [...new Set(gr.map(x => strip(x.played)))];
+        return `<div class="tr">${miniBoard(g.fen, g.colour, g.last, expMove(g))}<div class="tr-t"><p class="mono">${esc(g.line) || 'Start'} <b>${mvLabel(g)}?</b></p>
+        <p><span class="bad">You played ${esc(played.join(', '))}${gr.length > 1 ? ` (${gr.length} games)` : ''}</span></p><p><span class="good">Prep: ${esc(g.expected.join(' or '))}</span></p><p class="cap">${chLine(g)}</p></div></div>`; }).join('')}</div>` : ''}
+    ${surprises.length ? `<h3 class="h3">Opponent surprises: add these to your studies</h3><p class="cap">Your opponent played a move you haven’t prepared. Worth adding to the chapter on Lichess, then replacing the study here.</p>
+      <div class="list">${groupBy(surprises, g => g.key + '>' + strip(g.played)).slice(0, 15).map(gr => { const g = gr[0];
+        return `<div class="li"><p class="mono">${esc(g.line) || 'Start'} <b>${mvLabel(g)} ${esc(g.played)}</b>${gr.length > 1 ? ` <span class="pill y">${gr.length} games</span>` : ''}</p><p class="cap">You’ve prepared ${esc(g.expected.join(', '))} here · ${chLine(g)}</p></div>`; }).join('')}</div>` : ''}
+    ${ends.length ? `<h3 class="h3">Where your prep ran out</h3><p class="cap">You followed your prep to its last move and the game carried on. If a line shows up often, it’s worth extending.</p>
+      <div class="list">${groupBy(ends, g => g.key).slice(0, 10).map(gr => { const g = gr[0];
+        return `<div class="li"><p class="mono">${esc(g.line)}</p><p class="cap">${gr.length} game${gr.length > 1 ? 's' : ''} · next move played: ${esc([...new Set(gr.map(x => x.played))].join(', '))} · ${chLine(g)}</p></div>`; }).join('')}</div>` : ''}
+    <h3 class="h3">All games</h3>
+    <div class="table"><table><thead><tr><th>Game</th><th>Prep</th><th class="num">Result</th></tr></thead><tbody>
+    ${G.map(g => `<tr><td><span class="gdot ${g.colour}"></span>${esc(nm(g))}<span class="cap block">${esc(g.date)}${g.site ? ' · ' + g.site : ''}${g.url ? ` · <a href="${esc(g.url)}" target="_blank" rel="noopener">open ↗</a>` : ''}</span></td>
+      <td>${g.kind === 'noprep' ? '<span class="pill n">no matching study</span>' : g.kind === 'error' ? '<span class="pill n">couldn’t read</span>' : `<span class="pill ${g.kind === 'mistake' ? 'r' : g.kind === 'surprise' ? 'y' : 'g'}">${{ mistake: 'You left prep', surprise: 'Opponent left prep', end: 'Prep ran out', whole: 'All in prep' }[g.kind]}</span><span class="cap block">${g.kind === 'whole' ? 'whole game' : 'at move ' + g.num}</span>`}</td>
+      <td class="num">${resultFor(g)}</td></tr>`).join('')}
+    </tbody></table></div>
+    ${G.some(g => g.kind === 'noprep') ? `<p class="cap">${G.filter(g => g.kind === 'noprep').length} game(s) had no matching study, usually because they were played with the colour you haven’t imported yet.</p>` : ''}`;
+  $$('[data-gdrill]', box).forEach(b => b.onclick = () => {
+    const c = b.dataset.gdrill;
+    if (state.settings.side !== c) { state.settings.side = c; state.settings.focus = ''; rebuild(); }
+    startSession({ kind: 'games' });
+  });
+}
+async function runGameCheck(direct) {
+  const msg = $('#g-msg');
+  let text = typeof direct === 'string' ? direct : $('#g-text').value.trim();
+  if (typeof direct !== 'string') for (const f of $('#g-file').files) text += '\n\n' + await f.text();
+  if (!text.trim()) { msg.innerHTML = '<span class="bad">Choose your games file or paste games first.</span>'; return; }
+  if (!state.chapters.some(c => !studyOf(c.studyId)?.example)) { msg.innerHTML = '<span class="bad">Import your own study in Library first, so there’s prep to compare against.</span>'; return; }
+  msg.textContent = 'Checking games…';
+  await new Promise(r => setTimeout(r, 30));
+  const games = analyzeGames(text);
+  const col = state.settings.side === 'w' ? 'White' : 'Black';
+  if (!games.length) { msg.innerHTML = `<span class="bad">No ${col} games found in that file${games.skipped ? ` (${games.skipped} games with the other colour were skipped)` : ''}.</span>`; return; }
+  // positions you got wrong in real games become due for review
+  const ids = [];
+  state.gameMistakes = state.gameMistakes || {};
+  for (const g of games) if (g.kind === 'mistake' && g.cardId) {
+    if (!state.cards[g.cardId]) state.cards[g.cardId] = newRec();
+    state.cards[g.cardId].d = Math.min(state.cards[g.cardId].d, Date.now());
+    ids.push(g.cardId);
+    const prev = state.gameMistakes[g.cardId];
+    const gid = (g.url || '') + g.date + (g.colour === 'w' ? g.black : g.white);
+    if (prev && prev.gids && prev.gids.includes(gid)) continue;
+    state.gameMistakes[g.cardId] = { opp: g.colour === 'w' ? g.black : g.white, date: g.date, played: g.played, streak: 0,
+      count: (prev ? prev.count : 0) + 1, gids: [...(prev ? prev.gids || [] : []), gid].slice(-10) };
+  }
+  state.gameReport = { at: Date.now(), side: state.settings.side, games: games.slice(-200) };
+  touch('cards', ids);
+  msg.innerHTML = `<span class="good">Checked ${games.length} ${col} game${games.length === 1 ? '' : 's'}.</span>${games.skipped ? ` ${games.skipped} game${games.skipped === 1 ? '' : 's'} with the other colour skipped.` : ''}`;
+  $('#g-text').value = ''; $('#g-file').value = ''; $('#g-fname').textContent = 'No file chosen';
+  renderGames();
+  $('#g-report').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+
+// ---------- backup and restore ----------
+function backupData() { return JSON.stringify({ app: 'prepbook', v: 2, exportedAt: Date.now(), state }); }
+function showLastBackup() {
+  const t = state.settings.lastBackup;
+  $('#bk-last').textContent = t ? `Last backup: ${new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}.` : 'No backup yet. A monthly backup is a good habit.';
+}
+async function saveBackup() {
+  const msg = $('#bk-msg');
+  const data = backupData(), filename = `prepbook-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  const C = window.claude;
+  const done = () => { state.settings.lastBackup = Date.now(); touch('meta'); showLastBackup(); msg.innerHTML = `<span class="good">Backup saved as ${esc(filename)}.</span> On iPhone it’s in the Files app, in Downloads.`; };
+  if (C && typeof C.use === 'function') {
+    const dl = await C.use('downloads');
+    if (dl) {
+      try { await dl.save({ filename, data }); return done(); }
+      catch (e) { msg.innerHTML = e && /declin|cancel|denied/i.test(e.code || '') ? 'Backup cancelled.' : '<span class="bad">Couldn’t save the file here. Copy the backup text below into a note instead.</span>' + `<textarea readonly>${esc(data)}</textarea>`; return; }
+    }
+    msg.innerHTML = '<span class="bad">Saving files isn’t available in this view. Copy the backup text below into a note instead.</span>' + `<textarea readonly>${esc(data)}</textarea>`;
+    return;
+  }
+  // standalone copy outside Claude: an ordinary browser download
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+  a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  done();
+}
+async function loadBackup(file) {
+  const msg = $('#bk-msg');
+  let b;
+  try { b = JSON.parse(await file.text()); } catch (e) { b = null; }
+  const next = b && b.app === 'prepbook' && migrate(b.state);
+  if (!next) { msg.innerHTML = '<span class="bad">That file isn’t a Prep Book backup.</span>'; return; }
+  const started = Object.keys(next.cards || {}).length;
+  msg.innerHTML = `<div class="notice warn">Replace everything here with the backup from <b>${new Date(b.exportedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</b>? It has ${next.studies.length} stud${next.studies.length === 1 ? 'y' : 'ies'} and ${started} position${started === 1 ? '' : 's'} started.
+    <div class="row tight"><button class="dangerbtn" id="bk-yes">Yes, restore</button><button class="ghostbtn" id="bk-no">Cancel</button></div></div>`;
+  $('#bk-no').onclick = () => { msg.innerHTML = ''; };
+  $('#bk-yes').onclick = () => {
+    const oldCh = state.chapters.map(c => c.id);
+    state = { ...next, gameMistakes: next.gameMistakes || {}, settings: { ...next.settings, lastBackup: state.settings.lastBackup } };
+    touch('removed', oldCh.filter(id => !state.chapters.some(c => c.id === id)));
+    touch('chapter', state.chapters.map(c => c.id));
+    touch('allcards');
+    rebuild();
+    flush();
+    render();
+    $('#bk-msg').innerHTML = '<span class="good">Backup restored.</span>';
+  };
+}
+
+
+// ---------- Lichess sign-in (only used outside Claude, e.g. on GitHub Pages) ----------
+const IN_CLAUDE = !!(window.claude && typeof window.claude.use === 'function') || /(^|\.)claude(usercontent)?\.(ai|com)$/.test(location.hostname);
+const LI = 'https://lichess.org', EX = 'https://explorer.lichess.ovh', LI_CLIENT = 'prepbook-trainer';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const b64u = a => btoa(String.fromCharCode(...a)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const Li = {
+  user: '',
+  get token() { try { return localStorage.getItem('prepbook.liToken') || ''; } catch (e) { return ''; } },
+  set token(v) { try { v ? localStorage.setItem('prepbook.liToken', v) : localStorage.removeItem('prepbook.liToken'); } catch (e) { /* blocked */ } },
+  here() { return location.origin + location.pathname; },
+  async signIn() {
+    const rand = n => { const a = new Uint8Array(n); crypto.getRandomValues(a); return b64u(a); };
+    const verifier = rand(48), st = rand(12);
+    const challenge = b64u(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier))));
+    try { sessionStorage.setItem('prepbook.pkce', JSON.stringify({ verifier, st })); } catch (e) { /* blocked */ }
+    // no scopes: Prep Book can only read public data, never your account
+    const q = new URLSearchParams({ response_type: 'code', client_id: LI_CLIENT, redirect_uri: this.here(), code_challenge_method: 'S256', code_challenge: challenge, state: st });
+    location.href = LI + '/oauth?' + q;
+  },
+  // called on page load: finishes a sign-in when Lichess sends you back here
+  async finish() {
+    const u = new URL(location.href), code = u.searchParams.get('code'), err = u.searchParams.get('error'), st = u.searchParams.get('state');
+    if (!code && !err) return null;
+    history.replaceState(null, '', this.here());
+    let p = null;
+    try { p = JSON.parse(sessionStorage.getItem('prepbook.pkce')); sessionStorage.removeItem('prepbook.pkce'); } catch (e) { /* blocked */ }
+    if (!code || !p || p.st !== st) return 'Lichess sign-in was cancelled.';
+    try {
+      const r = await fetch(LI + '/api/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ grant_type: 'authorization_code', code, code_verifier: p.verifier, redirect_uri: this.here(), client_id: LI_CLIENT }) });
+      const j = await r.json();
+      if (!j.access_token) throw new Error('no token');
+      this.token = j.access_token;
+      return 'ok';
+    } catch (e) { return 'Couldn’t finish signing in to Lichess. Try again.'; }
+  },
+  async whoami() {
+    if (!this.token) return '';
+    try {
+      const r = await fetch(LI + '/api/account', { headers: { Authorization: 'Bearer ' + this.token } });
+      if (r.status === 401) { this.token = ''; return ''; }
+      const j = await r.json();
+      return (this.user = j.username || '');
+    } catch (e) { return this.user; }
+  },
+  signOut() {
+    const t = this.token;
+    this.token = ''; this.user = '';
+    if (t) fetch(LI + '/api/token', { method: 'DELETE', headers: { Authorization: 'Bearer ' + t } }).catch(() => {});
+  }
+};
+
+// ---------- opening explorer (Masters / Lichess) with a saved cache ----------
+const exCache = new Map();
+let exLoaded = false, exSaveT = 0, exChain = Promise.resolve(), exPausedUntil = 0;
+function exLoad() {
+  if (exLoaded) return; exLoaded = true;
+  try { const o = JSON.parse(localStorage.getItem('prepbook.ex') || '{}'); for (const k in o) exCache.set(k, o[k]); } catch (e) { /* none */ }
+}
+function exSave() {
+  clearTimeout(exSaveT);
+  exSaveT = setTimeout(() => { try { localStorage.setItem('prepbook.ex', JSON.stringify(Object.fromEntries([...exCache].slice(-2500)))); } catch (e) { /* full */ } }, 800);
+}
+const RATING_SETS = { low: '0,1000,1200,1400', mid: '1600,1800', high: '2000,2200,2500', all: '1000,1200,1400,1600,1800,2000,2200,2500' };
+function mapSet() {
+  const m = state.settings.map || (state.settings.map = {});
+  return { db: m.db || 'masters', depth: m.depth || 6, thr: m.thr ?? 5, rating: m.rating || 'mid', study: m.study || '' };
+}
+function exUrl(fen) {
+  const m = mapSet(), f = encodeURIComponent(fen);
+  return m.db === 'masters' ? `${EX}/masters?fen=${f}&moves=15&topGames=0`
+    : `${EX}/lichess?variant=standard&fen=${f}&speeds=blitz,rapid,classical&ratings=${RATING_SETS[m.rating]}&moves=15&topGames=0&recentGames=0`;
+}
+function dbReady() { return !IN_CLAUDE && !!Li.token && mapSet().db !== 'none'; }
+function explore(fen) {
+  exLoad();
+  const url = exUrl(fen);
+  if (exCache.has(url)) return Promise.resolve(exCache.get(url));
+  const job = exChain.then(async () => {
+    if (exCache.has(url)) return exCache.get(url);
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const wait = exPausedUntil - Date.now();
+      if (wait > 0) { mapUI.note = 'Lichess asked us to slow down. Waiting a minute…'; mapProgress(); await sleep(wait); mapUI.note = ''; }
+      let r;
+      try { r = await fetch(url, { headers: { Authorization: 'Bearer ' + Li.token } }); }
+      catch (e) { throw Object.assign(new Error('net'), { code: 'net' }); }
+      if (r.status === 429) { exPausedUntil = Date.now() + 61000; continue; }
+      if (r.status === 401) { Li.token = ''; throw Object.assign(new Error('auth'), { code: 'auth' }); }
+      if (!r.ok) throw Object.assign(new Error('http'), { code: 'http' });
+      const j = await r.json();
+      const slim = { w: j.white, d: j.draws, b: j.black, o: j.opening ? j.opening.name : '',
+        m: (j.moves || []).map(x => [x.san, x.white, x.draws, x.black, x.opening ? x.opening.name : '', x.averageRating || 0]) };
+      exCache.set(url, slim); exSave();
+      await sleep(140);
+      return slim;
+    }
+    throw Object.assign(new Error('rate'), { code: 'rate' });
+  });
+  exChain = job.catch(() => {});
+  return job;
+}
+
+// ---------- the Map: your repertoire tree against the database ----------
+const mapUI = { root: [], sel: [], run: 0, tree: null, loading: 0, done: 0, note: '', err: '', info: null, wide: false };
+const lineFromStart = sans => {
+  let pos = Chess0.parse(Chess0.START);
+  const steps = [];
+  for (const san of sans) { const mv = Chess0.fromSan(pos, san); if (!mv) break; steps.push({ san: mv.san, num: pos.full, turn: pos.turn, from: mv.from, to: mv.to }); pos = mv.next; }
+  return { pos, steps };
+};
+const moveLabel = (num, turn, san) => `${num}${turn === 'w' ? '.' : '…'}${san}`;
+function mapStudies() { const s = mapSet().study; return state.studies.filter(st => !s || st.id === s); }
+function prepAt(pos) {
+  const k = Chess0.key(pos), side = state.settings.side, my = new Map(), opp = new Map(), chapters = new Set(), ids = [];
+  for (const st of mapStudies()) {
+    const e = rep.nodes.get(st.id + '|' + k);
+    if (!e) continue;
+    e.chapters.forEach(c => chapters.add(c));
+    e.my.forEach(m => my.set(strip(m.san), m));
+    e.opp.forEach(m => opp.set(strip(m.san), m));
+    if (e.turn === side && e.my.length) ids.push(side + st.id + '_' + Core.hash(e.key));
+  }
+  return { my, opp, chapters: [...chapters], ids, inPrep: chapters.size > 0 };
+}
+function memoryOf(ids) {
+  let weak = false, strong = ids.length > 0, seen = false;
+  for (const id of ids) {
+    const r = state.cards[id];
+    if (!r) { strong = false; continue; }
+    seen = true;
+    if (r.l >= 2 || r.s === 'relearn') weak = true;
+    if (!(r.s === 'review' && r.i >= 21)) strong = false;
+  }
+  return weak ? 'weak' : strong && seen ? 'strong' : '';
+}
+async function buildMapTree() {
+  const run = ++mapUI.run, m = mapSet(), side = state.settings.side, useDb = dbReady();
+  const { pos: rootPos, steps: rootSteps } = lineFromStart(mapUI.root);
+  const maxPly = m.depth * 2;
+  mapUI.loading = 0; mapUI.done = 0; mapUI.err = '';
+  const root = { pos: rootPos, ply: rootSteps.length, line: rootSteps.map(s => s.san), label: rootSteps.length ? moveLabel(rootSteps.at(-1).num, rootSteps.at(-1).turn, rootSteps.at(-1).san) : 'Start', reach: 1, kids: [], kind: 'root' };
+  let prepared = 0;
+  async function expand(node, noData) {
+    if (run !== mapUI.run) return;
+    if (node.ply >= maxPly) { node.end = 'depth'; return; }
+    const pos = node.pos, prep = prepAt(pos);
+    if (pos.turn === side) {
+      if (!prep.my.size) { node.end = node.kind === 'root' || prep.inPrep || node.prepared ? 'mine' : 'out'; return; }
+      prepared++;
+      node.memory = memoryOf(prep.ids);
+      for (const mv of prep.my.values()) {
+        const real = Chess0.fromSan(pos, mv.san);
+        if (!real) continue;
+        node.kids.push({ pos: real.next, ply: node.ply + 1, line: node.line.concat(real.san), label: moveLabel(pos.full, pos.turn, real.san), by: 'me', prepared: true, reach: node.reach, kids: [], parentMemory: node.memory });
+      }
+      for (const k of node.kids) await expand(k, noData);
+      return;
+    }
+    let stats = null;
+    if (useDb && !noData) {
+      mapUI.loading++; mapProgress();
+      try { stats = await explore(Chess0.fen(pos)); }
+      catch (e) { if (run === mapUI.run) mapUI.err = e.code; }
+      mapUI.done++; mapProgress();
+      if (run !== mapUI.run) return;
+    }
+    const total = stats ? stats.w + stats.d + stats.b : 0;
+    node.games = stats ? total : null;
+    const seen = new Set();
+    const add = (san, share, opening, games) => {
+      const real = Chess0.fromSan(pos, san);
+      if (!real || seen.has(strip(real.san))) return;
+      seen.add(strip(real.san));
+      const isPrep = prep.opp.has(strip(real.san));
+      node.kids.push({ pos: real.next, ply: node.ply + 1, line: node.line.concat(real.san), label: moveLabel(pos.full, pos.turn, real.san), by: 'opp', prepared: isPrep,
+        share, games, opening, reach: share == null ? null : (node.reach ?? 0) * share, kids: [], end: isPrep ? null : 'gap' });
+    };
+    if (stats && total) for (const [san, w, d, b, opening] of stats.m) {
+      const g = w + d + b, share = g / total;
+      if (prep.opp.has(strip(san)) || share * 100 >= m.thr) add(san, share, opening, g);
+    }
+    for (const mv of prep.opp.values()) add(mv.san, stats ? 0 : null, '', stats ? 0 : null);
+    node.kids.sort((a, b) => (b.share ?? 0) - (a.share ?? 0) || (b.prepared - a.prepared));
+    for (const k of node.kids) if (k.prepared) await expand(k, noData || (stats && total === 0));
+  }
+  mapUI.tree = null;
+  mapProgress();
+  await expand(root, false);
+  if (run !== mapUI.run) return;
+  root.prepared = prepared;
+  mapUI.tree = root;
+  mapUI.summary = summarizeTree(root, useDb);
+  renderMap();
+}
+// share of games that stay inside your preparation down to the chosen depth
+function covered(n) {
+  if (n.end === 'gap' || n.end === 'mine' || n.end === 'out') return 0;
+  if (n.end === 'depth' || !n.kids.length) return n.reach ?? 0;
+  if (n.pos.turn === state.settings.side) return Math.max(0, ...n.kids.map(covered));
+  if (n.games === 0) return n.reach ?? 0;
+  return n.kids.filter(k => k.prepared).reduce((a, k) => a + covered(k), 0);
+}
+function summarizeTree(root, useDb) {
+  const gaps = [], weak = [];
+  (function walk(n) {
+    if (n.end === 'gap') gaps.push({ n, reach: n.reach ?? 0, kind: 'reply' });
+    if (n.end === 'mine' && n.kind !== 'root') gaps.push({ n, reach: n.reach ?? 0, kind: 'mine' });
+    if (n.memory === 'weak') weak.push(n);
+    n.kids.forEach(walk);
+  })(root);
+  gaps.sort((a, b) => b.reach - a.reach);
+  return { cov: useDb ? covered(root) : null, gaps, big: useDb ? gaps.filter(g => g.reach >= 0.01).length : gaps.length, weak, prepared: root.prepared };
+}
+function mapProgress() {
+  const el = $('#mp-status');
+  if (!el) return;
+  if (mapUI.note) { el.textContent = mapUI.note; return; }
+  el.textContent = mapUI.tree ? '' : mapUI.loading ? `Loading positions from the database… ${mapUI.done} of ${mapUI.loading}` : 'Building your tree…';
+}
+
+// ---------- tree drawing ----------
+function layoutTree(root) {
+  const nodes = [];
+  let leaf = 0;
+  (function place(n, depth) {
+    n.d = depth;
+    if (!n.kids.length) n.y = leaf++;
+    else { n.kids.forEach(k => place(k, depth + 1)); n.y = (n.kids[0].y + n.kids[n.kids.length - 1].y) / 2; }
+    nodes.push(n);
+  })(root, 0);
+  return { nodes, rows: Math.max(1, leaf) };
+}
+function treeSvg(root) {
+  const { nodes, rows } = layoutTree(root);
+  const COL = 124, ROW = 34, PAD = 26, maxD = Math.max(...nodes.map(n => n.d));
+  const W = PAD * 2 + maxD * COL + 150, H = PAD * 2 + rows * ROW;
+  const px = n => PAD + n.d * COL, py = n => PAD + n.y * ROW + ROW / 2;
+  const pw = n => Math.max(44, n.label.length * 7.4 + 18);
+  const selKey = mapUI.sel.join(' ');
+  let edges = '', pills = '';
+  for (const n of nodes) for (const k of n.kids) {
+    const x1 = px(n) + pw(n), y1 = py(n), x2 = px(k), y2 = py(k), mx = (x1 + x2) / 2;
+    const w = k.share != null ? 2 + Math.min(1, k.share * 1.6) * 12 : 4;
+    edges += `<path class="e ${k.prepared ? 'ok' : 'gap'}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}" stroke-width="${w.toFixed(1)}"/>`;
+  }
+  for (const n of nodes) {
+    const x = px(n), y = py(n), w = pw(n), cls = ['p', n.kind === 'root' ? 'root' : n.by === 'me' ? 'me' : n.prepared ? 'rep' : 'gap', n.memory || '', n.line.join(' ') === selKey ? 'sel' : ''].join(' ');
+    pills += `<g class="${cls}" data-line="${esc(n.line.join(' '))}" tabindex="0" role="button" aria-label="${esc(n.label)}">
+      <rect x="${x}" y="${y - 12}" width="${w}" height="24" rx="12"/><text x="${x + w / 2}" y="${y + 5}" text-anchor="middle">${esc(n.label)}</text>`;
+    if (n.by === 'opp' && n.prepared && n.opening) pills += `<text class="on" x="${x + 4}" y="${y - 16}">${esc(n.opening.length > 30 ? n.opening.slice(0, 29) + '…' : n.opening)}</text>`;
+    if (n.by === 'opp' && n.share != null) pills += `<text class="sh ${n.prepared ? '' : 'g'}" x="${x + w + 6}" y="${y + 5}">${n.prepared ? '' : '⚠ '}${(n.share * 100).toFixed(n.share < 0.1 ? 1 : 0)}%</text>`;
+    else if (n.end === 'gap') pills += `<text class="sh g" x="${x + w + 6}" y="${y + 5}">not prepared</text>`;
+    if (n.end === 'mine' && n.kind !== 'root') pills += `<text class="sh g" x="${x + w + 6}" y="${y + 5}">your move?</text>`;
+    pills += '</g>';
+  }
+  mapUI.rootY = py(root);
+  return `<svg class="tree" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Repertoire tree">${edges}${pills}</svg>`;
+}
+
+// ---------- rendering ----------
+function renderMap() {
+  const m = mapSet(), side = state.settings.side, col = side === 'w' ? 'White' : 'Black';
+  $('#app').classList.add('wide');
+  const studies = state.studies.filter(s => state.chapters.some(c => c.studyId === s.id && c.side === side && c.enabled));
+  const sum = mapUI.summary, useDb = dbReady();
+  const dbLabel = m.db === 'masters' ? 'Masters' : 'Lichess';
+  $('#mp-controls').innerHTML = `
+    <div class="mp-row"><span class="lbl">Study</span>${seg('mstudy', [['', `All ${col} studies`], ...studies.map(s => [s.id, esc(s.name)])], m.study)}</div>
+    <div class="mp-row"><span class="lbl">Database</span>${seg('mdb', [['masters', 'Masters'], ['lichess', 'Lichess'], ['none', 'Just my prep']], m.db)}</div>
+    ${m.db === 'lichess' ? `<div class="mp-row"><span class="lbl">Lichess players rated</span>${seg('mrating', [['low', 'Under 1600'], ['mid', '1600–2000'], ['high', '2000+'], ['all', 'Everyone']], m.rating)}</div>` : ''}
+    <div class="mp-grid">
+      <label class="lbl" for="mp-depth">Depth</label>
+      <select id="mp-depth">${[3, 4, 5, 6, 7, 8, 10, 12].map(d => `<option value="${d}" ${d === m.depth ? 'selected' : ''}>to move ${d}</option>`).join('')}</select>
+      <label class="lbl" for="mp-thr">Show replies played in</label>
+      <select id="mp-thr">${[1, 2, 5, 10, 20].map(t => `<option value="${t}" ${t === m.thr ? 'selected' : ''}>${t}%+ of games</option>`).join('')}</select>
+    </div>
+    ${IN_CLAUDE ? `<p class="notice">The live Masters and Lichess database works in your <b>GitHub Pages</b> copy of Prep Book. Here the map shows your prepared lines only.</p>`
+      : m.db === 'none' ? '' : Li.token ? `<p class="cap">Signed in to Lichess${Li.user ? ' as <b>' + esc(Li.user) + '</b>' : ''} · live ${dbLabel} database · <button class="link" id="li-out">Sign out</button></p>`
+      : `<div class="notice"><b>Sign in with Lichess to load the database.</b> It’s free and Prep Book asks for no permissions, so it can only read public data, never your account. <div class="row tight"><button class="primary inline" id="li-in">Sign in with Lichess</button></div></div>`}`;
+  const head = $('#mp-head');
+  if (!mapUI.tree) head.innerHTML = '';
+  else {
+    const g = sum.gaps[0];
+    const gl = g ? Core.fmtPath(lineFromStart(g.n.line).steps) : '';
+    head.innerHTML = `
+      <div class="cov">
+        ${sum.cov != null ? `<div class="ring sm" style="--p:${Math.round(sum.cov * 100)}"><span>${Math.round(sum.cov * 100)}%</span></div>` : ''}
+        <div><p class="cov-t">${sum.cov != null ? `${Math.round(sum.cov * 100)}% of ${dbLabel} games stay in your preparation to move ${m.depth}` : `Your prepared lines to move ${m.depth}`}</p>
+        <p class="cap">${sum.prepared} position${sum.prepared === 1 ? '' : 's'} prepared · ${sum.cov != null ? `${sum.big} gap${sum.big === 1 ? '' : 's'} in 1%+ of games` : `${sum.big} gap${sum.big === 1 ? '' : 's'}`}${sum.weak.length ? ` · ${sum.weak.length} weak point${sum.weak.length === 1 ? '' : 's'} from training` : ''}</p>
+        ${g ? `<p class="cap">Biggest gap: <button class="link mono" data-line="${esc(g.n.line.join(' '))}">${esc(gl)}</button>${g.reach ? ` · ${(g.reach * 100).toFixed(1)}% of games` : ''}</p>` : ''}</div>
+      </div>
+      ${mapUI.root.length ? `<p class="cap crumb">Showing the branch after <b class="mono">${esc(Core.fmtPath(lineFromStart(mapUI.root).steps))}</b> · <button class="link" id="mp-top">Back to the full tree</button></p>` : ''}`;
+  }
+  const box = $('#mp-tree');
+  const prevScroll = mapUI.tree && box.dataset.key === mapUI.key ? [box.scrollLeft, box.scrollTop] : null;
+  box.innerHTML = mapUI.tree ? treeSvg(mapUI.tree) : '';
+  box.dataset.key = mapUI.tree ? mapUI.key : '';
+  if (mapUI.tree) {
+    if (prevScroll) [box.scrollLeft, box.scrollTop] = prevScroll;
+    else { box.scrollLeft = 0; box.scrollTop = Math.max(0, mapUI.rootY - box.clientHeight / 2); }
+  }
+  $('#mp-legend').hidden = !mapUI.tree;
+  const err = { auth: 'Your Lichess sign-in has expired. Sign in again to load the database.', net: 'Couldn’t reach the Lichess database. Check your internet connection and refresh.', http: 'The Lichess database had a problem with some positions. Try again in a minute.', rate: 'Lichess is busy. Try again in a minute.' }[mapUI.err];
+  $('#mp-err').innerHTML = err ? `<span class="bad">${err}</span>` : '';
+  // gaps list
+  $('#mp-gaps').innerHTML = mapUI.tree && sum.gaps.length ? `<h3 class="h3">Gaps to prepare</h3><p class="cap">Biggest first. Tap one to see the position, then add a reply to your study on Lichess.</p>
+    <div class="list">${sum.gaps.slice(0, 12).map(g => `<button class="li gapbtn" data-line="${esc(g.n.line.join(' '))}"><span class="mono">${esc(Core.fmtPath(lineFromStart(g.n.line).steps, 10))}</span>
+      <span class="cap">${g.kind === 'mine' ? 'Your move isn’t prepared here' : 'Opponent reply not prepared'}${g.reach ? ` · ${(g.reach * 100).toFixed(1)}% of all games` : ''}</span></button>`).join('')}</div>` : '';
+  mapProgress();
+  renderPos();
+  bindMap();
+}
+function bindMap() {
+  $$('.seg', $('#mp-controls')).forEach(g => g.onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const key = { mstudy: 'study', mdb: 'db', mrating: 'rating' }[g.dataset.set];
+    state.settings.map = { ...state.settings.map, [key]: b.dataset.val };
+    touch('meta'); refreshMap();
+  });
+  $('#mp-depth').onchange = e => { state.settings.map = { ...state.settings.map, depth: +e.target.value }; touch('meta'); refreshMap(); };
+  $('#mp-thr').onchange = e => { state.settings.map = { ...state.settings.map, thr: +e.target.value }; touch('meta'); refreshMap(); };
+  $('#li-in') && ($('#li-in').onclick = () => Li.signIn());
+  $('#li-out') && ($('#li-out').onclick = () => { Li.signOut(); refreshMap(); });
+  $('#mp-top') && ($('#mp-top').onclick = () => { mapUI.root = []; refreshMap(); });
+  $$('[data-line]', $('#v-map')).forEach(el => {
+    if (el.closest('#mp-pos')) return;
+    const go = () => { mapUI.sel = el.dataset.line ? el.dataset.line.split(' ') : []; markSel(); renderPos(); if (innerWidth < 1000) $('#mp-pos').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+    el.onclick = go;
+    el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } };
+  });
+}
+function markSel() {
+  const k = mapUI.sel.join(' ');
+  $$('#mp-tree g.p').forEach(g => g.classList.toggle('sel', g.dataset.line === k));
+}
+function refreshMap() {
+  mapUI.key = [state.settings.side, JSON.stringify(mapSet()), mapUI.root.join(' '), repVersion, Li.token ? 1 : 0].join('|');
+  mapUI.tree = null; mapUI.summary = null;
+  renderMap();
+  buildMapTree();
+}
+
+// ---------- position panel: free-click explorer ----------
+let posSelSq = null;
+async function renderPos() {
+  const box = $('#mp-pos');
+  if (!box) return;
+  const { pos, steps } = lineFromStart(mapUI.sel);
+  const side = state.settings.side, prep = prepAt(pos), mine = pos.turn === side;
+  const last = steps.length ? steps.at(-1) : null;
+  const chs = prep.chapters.map(chName);
+  const lichessUrl = `https://lichess.org/analysis/standard/${Chess0.fen(pos).replace(/ /g, '_')}`;
+  const prepText = mine
+    ? (prep.my.size ? `Your move. Your prep: <b>${esc([...prep.my.values()].map(x => x.san).join(' or '))}</b>` : prep.inPrep ? '<span class="bad">Your move, and you haven’t prepared one here.</span>' : 'Out of your prep.')
+    : (prep.opp.size ? `Opponent to move. You’ve prepared for <b>${esc([...prep.opp.values()].map(x => x.san).join(', '))}</b>` : prep.inPrep ? 'Opponent to move. Your prep ends here.' : 'Out of your prep.');
+  const branchIds = branchCards(mapUI.sel);
+  box.innerHTML = `
+    <div class="pos-h"><span class="lbl">Position</span>
+      <div class="pos-nav"><button class="ghostbtn sm" id="ps-start" ${steps.length ? '' : 'disabled'} aria-label="Back to the start">⏮</button><button class="ghostbtn sm" id="ps-back" ${steps.length ? '' : 'disabled'} aria-label="Back one move">◀</button></div></div>
+    <p class="mono pos-line">${steps.length ? esc(Core.fmtPath(steps)) : 'Starting position'}</p>
+    ${chs.length ? `<p class="cap">${esc(chs.slice(0, 3).join(' · '))}${chs.length > 3 ? ` +${chs.length - 3}` : ''}</p>` : ''}
+    <div class="mboard" id="ps-board">${mapBoardHtml(pos, side, last)}</div>
+    <p class="pos-prep">${prepText}</p>
+    <div class="row tight">
+      ${branchIds.length ? `<button class="primary inline" id="ps-train">Train this branch (${branchIds.length})</button>` : ''}
+      ${steps.length ? `<button class="ghostbtn" id="ps-root">Map from here</button>` : ''}
+      <a class="ghostbtn" href="${esc(lichessUrl)}" target="_blank" rel="noopener">Open on Lichess ↗</a>
+    </div>
+    <div id="ps-stats" class="ps-stats"></div>`;
+  $('#ps-back').onclick = () => { mapUI.sel = mapUI.sel.slice(0, -1); markSel(); renderPos(); };
+  $('#ps-start').onclick = () => { mapUI.sel = []; markSel(); renderPos(); };
+  $('#ps-train') && ($('#ps-train').onclick = () => startSession({ scopeCards: branchIds.map(id => rep.byId.get(id)).filter(Boolean) }));
+  $('#ps-root') && ($('#ps-root').onclick = () => { mapUI.root = mapUI.sel.slice(); refreshMap(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  posSelSq = null;
+  $('#ps-board').onclick = e => {
+    const c = e.target.closest('.sq'); if (!c) return;
+    const sq = +c.dataset.sq, legal = Chess0.legal(pos);
+    if (posSelSq != null) {
+      const mv = legal.find(x => x.from === posSelSq && x.to === sq && (!x.promo || x.promo === 'q'));
+      if (mv) { mapUI.sel = mapUI.sel.concat(mv.san); markSel(); return renderPos(); }
+    }
+    const pc = pos.b[sq];
+    posSelSq = pc && ((pc === pc.toUpperCase()) === (pos.turn === 'w')) ? sq : null;
+    $$('#ps-board .sq').forEach(x => x.classList.remove('sel', 'tgt', 'tgtc'));
+    if (posSelSq != null) {
+      c.classList.add('sel');
+      legal.filter(x => x.from === posSelSq).forEach(x => $(`#ps-board .sq[data-sq="${x.to}"]`).classList.add(pos.b[x.to] ? 'tgtc' : 'tgt'));
+    }
+  };
+  // database moves for this position
+  const st = $('#ps-stats');
+  if (!dbReady()) { st.innerHTML = prepMovesTable(pos, prep, null); bindStats(); return; }
+  st.innerHTML = '<p class="cap">Loading database…</p>';
+  const key = mapUI.sel.join(' ');
+  let stats = null;
+  try { stats = await explore(Chess0.fen(pos)); } catch (e) { st.innerHTML = '<p class="cap bad">Couldn’t load the database for this position.</p>'; return; }
+  if (mapUI.sel.join(' ') !== key) return;
+  st.innerHTML = prepMovesTable(pos, prep, stats);
+  bindStats();
+}
+function bindStats() {
+  $$('#ps-stats [data-san]').forEach(r => r.onclick = () => { mapUI.sel = mapUI.sel.concat(r.dataset.san); markSel(); renderPos(); });
+}
+function prepMovesTable(pos, prep, stats) {
+  const side = state.settings.side, mine = pos.turn === side;
+  const total = stats ? stats.w + stats.d + stats.b : 0;
+  const myScore = (w, d, b) => { const t = w + d + b; return t ? Math.round(100 * ((side === 'w' ? w : b) + d / 2) / t) : null; };
+  const rows = [];
+  const seen = new Set();
+  if (stats) for (const [san, w, d, b] of stats.m) { seen.add(strip(san)); rows.push({ san, w, d, b, g: w + d + b }); }
+  for (const mv of (mine ? prep.my : prep.opp).values()) if (!seen.has(strip(mv.san))) rows.push({ san: mv.san, w: 0, d: 0, b: 0, g: 0 });
+  if (!rows.length) return stats ? '<p class="cap">No games in the database reach this position.</p>' : '';
+  const tag = san => {
+    const k = strip(san);
+    if (mine) return prep.my.has(k) ? '<span class="pill g">your move</span>' : '';
+    return prep.opp.has(k) ? '<span class="pill g">prepared</span>' : (prep.inPrep ? '<span class="pill r">gap</span>' : '');
+  };
+  return `${stats ? `<p class="cap">${total.toLocaleString()} ${mapSet().db === 'masters' ? 'Masters' : 'Lichess'} games${total ? ` · you score ${myScore(stats.w, stats.d, stats.b)}% here as ${side === 'w' ? 'White' : 'Black'}` : ''}</p>` : '<p class="cap">Your prepared moves here. Sign in on the GitHub copy to see database stats.</p>'}
+    <div class="table"><table class="mvtab"><thead><tr><th>Move</th>${stats ? '<th class="num">Played</th><th>White · Draw · Black</th>' : ''}<th></th></tr></thead><tbody>
+    ${rows.slice(0, 15).map(r => `<tr data-san="${esc(r.san)}" tabindex="0"><td class="mono">${esc(r.san)}</td>${stats ? `<td class="num">${total ? (100 * r.g / total).toFixed(r.g / total < 0.1 ? 1 : 0) : 0}%</td>
+      <td>${r.g ? `<div class="wdb"><i class="w" style="width:${100 * r.w / r.g}%"></i><i class="d" style="width:${100 * r.d / r.g}%"></i><i class="b" style="width:${100 * r.b / r.g}%"></i></div>` : '<span class="cap">no games</span>'}</td>` : ''}
+      <td>${tag(r.san)}</td></tr>`).join('')}
+    </tbody></table></div>`;
+}
+function mapBoardHtml(pos, side, last) {
+  let h = '';
+  for (let i = 0; i < 64; i++) {
+    const r = Math.floor(i / 8), f = i % 8;
+    const sq = side === 'w' ? (7 - r) * 8 + f : r * 8 + (7 - f);
+    const pc = pos.b[sq];
+    const cls = ((sq & 7) + (sq >> 3)) % 2 ? 'lt' : 'dk';
+    const hl = last && (last.from === sq || last.to === sq) ? ' last' : '';
+    h += `<div class="sq ${cls}${hl}" data-sq="${sq}">${pc ? `<svg class="pc ${pc === pc.toUpperCase() ? 'w' : 'b'}" viewBox="0 0 100 100"><use href="#pc-${pc.toLowerCase()}"/></svg>` : ''}</div>`;
+  }
+  return h;
+}
+// every learnable position at or below this point in your studies
+function branchCards(sans) {
+  const { pos } = lineFromStart(sans), k = Chess0.key(pos), side = state.settings.side, out = new Set();
+  for (const st of mapStudies()) {
+    const start = rep.nodes.get(st.id + '|' + k);
+    if (!start) continue;
+    const stack = [start], seen = new Set();
+    while (stack.length) {
+      const n = stack.pop();
+      if (seen.has(n.key)) continue;
+      seen.add(n.key);
+      if (n.turn === side && n.my.length && n.id && rep.byId.has(n.id)) out.add(n.id);
+      for (const m of n.my.concat(n.opp)) { const c = rep.nodes.get(m.child); if (c) stack.push(c); }
+    }
+  }
+  return [...out];
+}
+
+// ---------- fetch games straight from Lichess and Chess.com (outside Claude) ----------
+async function fetchGamesDirect() {
+  const msg = $('#g-msg'), side = state.settings.side, li = (state.settings.liUser || '').trim(), cc = (state.settings.ccUser || '').trim().toLowerCase();
+  if (!li && !cc) { msg.innerHTML = '<span class="bad">Type your Lichess or Chess.com username first.</span>'; return; }
+  let text = '', notes = [];
+  if (li) {
+    msg.textContent = 'Fetching your Lichess games…';
+    try {
+      const r = await fetch(`${LI}/api/games/user/${encodeURIComponent(li)}?max=200&color=${side === 'w' ? 'white' : 'black'}&moves=true&tags=true&clocks=false&evals=false&opening=false`,
+        { headers: { Accept: 'application/x-chess-pgn', ...(Li.token ? { Authorization: 'Bearer ' + Li.token } : {}) } });
+      if (r.status === 404) notes.push(`No Lichess player called “${li}”.`);
+      else if (!r.ok) notes.push('Lichess didn’t send the games (try again in a minute).');
+      else text += await r.text() + '\n\n';
+    } catch (e) { notes.push('Couldn’t reach Lichess.'); }
+  }
+  if (cc) {
+    msg.textContent = 'Fetching your Chess.com games…';
+    try {
+      const r = await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(cc)}/games/archives`);
+      if (r.status === 404) notes.push(`No Chess.com player called “${cc}”.`);
+      else {
+        const arch = ((await r.json()).archives || []).slice(-3);
+        for (const a of arch) { const g = await fetch(a + '/pgn'); if (g.ok) text += await g.text() + '\n\n'; }
+      }
+    } catch (e) { notes.push('Couldn’t reach Chess.com.'); }
+  }
+  if (!text.trim()) { msg.innerHTML = `<span class="bad">${esc(notes.join(' ') || 'No games found.')}</span>`; return; }
+  await runGameCheck(text);
+  if (notes.length) msg.innerHTML += ` <span class="cap">${esc(notes.join(' '))}</span>`;
+}
+
+// ---------- events ----------
+document.addEventListener('click', e => {
+  const go = e.target.closest('[data-go]');
+  if (go) { showView(go.dataset.go); return; }
+  const tab = e.target.closest('.tabs button');
+  if (tab) { if (tab.dataset.v === 'train' && !S && trainMode === 'drill') trainMode = 'home'; showView(tab.dataset.v); return; }
+  const act = e.target.closest('[data-act]');
+  if (!act) return;
+  const studyEl = act.closest('.study');
+  if (act.dataset.act === 'side') {
+    const c = chapterOf(act.closest('.ch').dataset.id);
+    if (c) { c.side = c.side === 'w' ? 'b' : 'w'; touch('chapter', [c.id]); rebuild(); render(); }
+  }
+  if (studyEl && act.dataset.act === 'reset') {
+    const st = studyOf(studyEl.dataset.sid);
+    confirmIn(studyEl, `Start <b>${esc(st.name)}</b> over? Every position in it goes back to “new”. Your chapters stay.`, () => { resetStudy(st.id); render(); });
+  }
+  if (studyEl && act.dataset.act === 'del') {
+    const st = studyOf(studyEl.dataset.sid);
+    confirmIn(studyEl, `Delete <b>${esc(st.name)}</b> and its progress? This can’t be undone.`, () => { deleteStudy(st.id); rebuild(); render(); });
+  }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.act === 'toggle') {
+    const c = chapterOf(t.closest('.ch').dataset.id);
+    if (c) { c.enabled = t.checked; touch('meta'); rebuild(); render(); }
+  }
+  if (t.dataset.act === 'replace' && t.files[0]) replaceFromFile(t.closest('.study').dataset.sid, t.files[0]);
+});
+$('#side-btn').addEventListener('click', () => {
+  if (S) return;
+  state.settings.side = state.settings.side === 'w' ? 'b' : 'w';
+  state.settings.focus = '';
+  touch('meta');
+  rebuild();
+  if (trainMode === 'summary') trainMode = 'home';
+  render();
+});
+$('#end').addEventListener('click', () => finishSession());
+$('#hint').addEventListener('click', () => {
+  if (!S || !S.awaiting || S.intro) return;
+  const e = S.entry, m = e.my[0];
+  S.hint++;
+  if (!S.failed) { S.failed = true; gradeBad(e); touch('cards', [e.id]); }
+  if (S.hint === 1) { board.highlightFrom(m.from); setPrompt('Hint: the highlighted piece moves.', 'new'); }
+  else { board.setArrow({ from: m.from, to: m.to, kind: 'hint' }); setPrompt('Play the arrow move.', 'new'); }
+});
+$('#skip').addEventListener('click', () => { if (S && S.awaiting) { S.awaiting = false; nextSegment(); } });
+$('#imp-go').addEventListener('click', doImport);
+$('#g-go').addEventListener('click', () => runGameCheck());
+$('#bk-save').addEventListener('click', saveBackup);
+$('#bk-file').addEventListener('change', e => { if (e.target.files[0]) loadBackup(e.target.files[0]); e.target.value = ''; });
+$('#g-file').addEventListener('change', e => { const f = [...e.target.files]; $('#g-fname').textContent = f.length ? f.map(x => x.name).join(', ') : 'No file chosen'; });
+for (const [id, k] of [['#g-li', 'liUser'], ['#g-cc', 'ccUser']]) $(id).addEventListener('input', e => { state.settings[k] = e.target.value.trim(); touch('meta'); gameLinks(); });
+$('#imp-file').addEventListener('change', e => { $('#imp-fname').textContent = e.target.files[0] ? e.target.files[0].name : 'No file chosen'; });
+document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
+
+// ---------- boot ----------
+rebuild();
+showView('train');
+setSyncLabel('device');
+board.set(Chess0.parse(Chess0.START).b, {});
+initSync();
+$('#g-fetch').addEventListener('click', fetchGamesDirect);
+if (!IN_CLAUDE) {
+  Li.finish().then(res => {
+    if (res) { showView('map'); if (res !== 'ok') setTimeout(() => { $('#mp-err').innerHTML = `<span class="bad">${esc(res)}</span>`; }, 50); }
+    return Li.whoami();
+  }).then(() => { if (view === 'map') renderMap(); });
+}
+})();
+</script>
+</body>
+</html>
