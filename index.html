@@ -418,6 +418,13 @@ a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
 .k.m { background: var(--good); } .k.s { background: color-mix(in srgb, var(--good) 40%, var(--line)); } .k.e { background: var(--line); }
 .backup { margin-top: 30px; padding-top: 6px; border-top: 1px solid var(--line); }
 #bk-msg textarea { margin-top: 8px; min-height: 80px; }
+.steps { padding-left: 20px; margin: 8px 0; display: flex; flex-direction: column; gap: 12px; font-size: 14px; }
+.steps .cap { display: inline-block; margin: 6px 0 0; }
+.gs-row { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.gs-row input { flex: 1 1 220px; min-width: 0; font-family: var(--f-mono); }
+.gs-msg { font-size: 14px; margin-top: 8px; }
+.gs-msg textarea { width: 100%; margin-top: 6px; font-size: 12px; }
+.gs-st { display: flex; gap: 8px; align-items: baseline; font-size: 14px; margin: 6px 0; }
 .danger { margin-top: 30px; padding-top: 16px; border-top: 1px solid var(--line); }
 .danger p { font-size: 14px; }
 #sync { font-size: 12px; color: var(--muted); margin: 26px 0 0; }
@@ -542,6 +549,10 @@ a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
     <section class="view" id="v-progress" hidden>
       <h2 class="h">Progress</h2>
       <div id="p-body"></div>
+      <div class="backup" id="gs-box" hidden>
+        <h3 class="h3">Sync across devices</h3>
+        <div id="gs-body"></div>
+      </div>
       <div class="backup">
         <h3 class="h3">Backup</h3>
         <p class="cap">Save everything (studies, progress, game reports and drills) to a file you keep. You can load it back here, or into an exported copy of Prep Book, so nothing is ever lost.</p>
@@ -1011,6 +1022,7 @@ function metaDoc() {
 }
 function flush() {
   saveLocal();
+  if (!IN_CLAUDE) gsSoon();
   if (!Sync.base) return;
   const base = Sync.base;
   const chap = [...dirty.chapters], rem = [...dirty.removed], bks = [...dirty.buckets], meta = dirty.meta;
@@ -1034,7 +1046,8 @@ function setSyncLabel(m) {
   el.textContent = m === 'account' ? 'Progress saved to your Claude account, so it follows you across devices.'
     : m === 'error' ? 'Couldn’t reach your Claude account just now. Progress is kept on this device and will retry on your next move.'
     : IN_CLAUDE ? 'Progress is saved on this device only. Open the page while signed in to Claude to keep it across devices.'
-    : 'Progress is saved in this browser. Use Backup below regularly, and Restore to move your progress to another device.';
+    : gsCfg() ? 'Studies and progress sync across your devices through GitHub (see Sync across devices above).'
+    : 'Progress is saved in this browser only. Set up Sync across devices above, or use Backup and Restore to move it.';
 }
 async function initSync() {
   const C = window.claude;
@@ -1683,7 +1696,7 @@ function render() {
   $('#side-btn').dataset.side = state.settings.side;
   if (view === 'train') renderTrain();
   if (view === 'library') renderLibrary();
-  if (view === 'progress') { renderProgress(); showLastBackup(); }
+  if (view === 'progress') { renderProgress(); showLastBackup(); gsRender(); }
   if (view === 'games') renderGames();
   if (view === 'map') {
     syncCard();
@@ -3349,6 +3362,186 @@ async function fetchGamesDirect() {
   if (notes.length) msg.innerHTML += ` <span class="cap">${esc(notes.join(' '))}</span>`;
 }
 
+// ---------- sync across devices through a private GitHub gist (GitHub copy only) ----------
+// Everything (studies, progress, settings) is kept in one private gist file, prepbook.json.
+const GS = { key: 'prepbook.gist', file: 'prepbook.json', timer: 0, busy: false, again: false, err: '', msg: '' };
+const TOKEN_URL = 'https://github.com/settings/tokens/new?scopes=gist&description=Prep%20Book%20sync';
+function gsCfg() { try { return JSON.parse(localStorage.getItem(GS.key) || 'null'); } catch (e) { return null; } }
+function gsSave(c) { try { c ? localStorage.setItem(GS.key, JSON.stringify(c)) : localStorage.removeItem(GS.key); } catch (e) { /* blocked */ } }
+async function gh(path, token, opt = {}) {
+  let r;
+  try {
+    r = await fetch('https://api.github.com' + path, { method: opt.method || 'GET', cache: 'no-store', body: opt.body,
+      headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + token, ...(opt.body ? { 'Content-Type': 'application/json' } : {}) } });
+  } catch (e) { throw Object.assign(new Error('net'), { code: 'net' }); }
+  if (r.status === 401 || r.status === 403) throw Object.assign(new Error('auth'), { code: 'auth' });
+  if (r.status === 404) throw Object.assign(new Error('gone'), { code: 'gone' });
+  if (!r.ok) throw Object.assign(new Error('http'), { code: 'http' });
+  return r.json();
+}
+async function gsRead(g) {
+  const f = g.files && g.files[GS.file];
+  if (!f) return null;
+  let text = f.content;
+  if (f.truncated || !text) { try { text = await (await fetch(f.raw_url, { cache: 'no-store' })).text(); } catch (e) { return null; } }
+  try { const j = JSON.parse(text); return j && j.app === 'prepbook' ? migrate(j.state) : null; } catch (e) { return null; }
+}
+const gsPayload = () => JSON.stringify({ app: 'prepbook', savedAt: Date.now(), state });
+const realData = s => s.studies.some(x => !x.example) || Object.keys(s.cards || {}).length > 0;
+// screen-size preferences stay with each device
+const LOCAL_MAP = ['zoom', 'zoomP', 'board', 'engine', 'view'];
+function gsApply(next) {
+  const mine = state.settings.map || {}, keep = {};
+  LOCAL_MAP.forEach(k => { if (k in mine) keep[k] = mine[k]; });
+  next.settings = { ...next.settings, map: { ...(next.settings.map || {}), ...keep } };
+  state = next;
+  saveLocal(); rebuild();
+  if (!S) render();
+}
+// take the saved copy, keeping any card you practised more recently on this device
+function gsUse(R) {
+  const cards = { ...R.cards };
+  for (const [id, r] of Object.entries(state.cards)) if (cards[id] && (r.t || 0) > (cards[id].t || 0)) cards[id] = r;
+  gsApply({ ...R, cards, settings: { ...R.settings, lastBackup: state.settings.lastBackup } });
+}
+// both devices changed something: keep the newer copy, plus studies added on the other device and the latest practice of every card
+function gsMerge(R, since) {
+  const remoteNewer = (R.updatedAt || 0) > (state.updatedAt || 0), base = remoteNewer ? R : state, other = remoteNewer ? state : R;
+  const studies = base.studies.slice(), chapters = base.chapters.slice();
+  for (const st of other.studies) {
+    if (st.example || studies.some(x => x.id === st.id) || (st.importedAt || 0) <= since) continue;
+    studies.push(st); chapters.push(...other.chapters.filter(c => c.studyId === st.id));
+  }
+  const cards = { ...base.cards };
+  for (const [id, r] of Object.entries(other.cards)) if (!cards[id] || (r.t || 0) > (cards[id].t || 0)) cards[id] = r;
+  gsApply({ ...base, studies, chapters, cards, settings: { ...base.settings, lastBackup: state.settings.lastBackup }, updatedAt: Date.now() });
+}
+function gsSoon(ms = 3000) { if (IN_CLAUDE || !gsCfg()) return; clearTimeout(GS.timer); GS.timer = setTimeout(gsSync, ms); }
+async function gsSync() {
+  const c = gsCfg();
+  if (IN_CLAUDE || !c) return;
+  if (GS.busy) { GS.again = true; return; }
+  GS.busy = true;
+  try {
+    const g = await gh('/gists/' + c.id, c.token);
+    if (g.updated_at !== c.seen) {
+      const R = await gsRead(g);
+      if (R) {
+        if (S) { GS.again = true; return; } // don't swap data in the middle of a training session
+        if ((state.updatedAt || 0) <= (c.sent || 0)) { gsUse(R); c.sent = state.updatedAt; }
+        else gsMerge(R, c.syncedAt || 0);
+      }
+      c.seen = g.updated_at;
+    }
+    if ((state.updatedAt || 0) > (c.sent || 0)) {
+      const sending = state.updatedAt;
+      const p = await gh('/gists/' + c.id, c.token, { method: 'PATCH', body: JSON.stringify({ files: { [GS.file]: { content: gsPayload() } } }) });
+      c.seen = p.updated_at; c.sent = sending;
+    }
+    c.syncedAt = Date.now();
+    gsSave(c);
+    GS.err = '';
+  } catch (e) {
+    GS.err = e.code || 'net';
+  } finally {
+    GS.busy = false;
+    gsRender();
+    if (GS.again) { GS.again = false; gsSoon(S ? 8000 : 800); }
+  }
+}
+async function gsConnect(token) {
+  token = (token || '').trim();
+  if (!token) { GS.msg = '<span class="bad">Paste your GitHub token first.</span>'; gsRender(); return; }
+  GS.msg = 'Connecting to GitHub…'; gsRender();
+  try {
+    const list = await gh('/gists?per_page=100', token);
+    const hit = list.find(g => g.files && g.files[GS.file]);
+    const R = hit ? await gsRead(await gh('/gists/' + hit.id, token)) : null;
+    if (!hit) {
+      const g = await gh('/gists', token, { method: 'POST', body: JSON.stringify({ description: 'Prep Book sync (private)', public: false, files: { [GS.file]: { content: gsPayload() } } }) });
+      gsSave({ token, id: g.id, seen: g.updated_at, sent: state.updatedAt, syncedAt: Date.now() });
+      GS.msg = '<span class="good">Connected. Your studies and progress on this device are now saved to GitHub.</span> Next, connect your other device (see below).';
+    } else if (!R || !realData(R)) {
+      gsSave({ token, id: hit.id, seen: '', sent: 0, syncedAt: Date.now() });
+      state.updatedAt = Date.now(); saveLocal();
+      GS.msg = '<span class="good">Connected.</span>';
+      await gsSync();
+    } else if (!realData(state)) {
+      gsSave({ token, id: hit.id, seen: hit.updated_at, sent: R.updatedAt, syncedAt: Date.now() });
+      gsUse(R);
+      GS.msg = `<span class="good">Connected. Loaded ${R.studies.filter(s => !s.example).length} stud${R.studies.filter(s => !s.example).length === 1 ? 'y' : 'ies'} from your other device.</span>`;
+    } else {
+      // both have data: let the owner choose
+      const when = new Date(R.updatedAt || 0).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+      GS.msg = `<div class="notice warn">GitHub already has Prep Book data (last changed <b>${esc(when)}</b>, ${R.studies.filter(s => !s.example).length} studies). This device has its own data too. Which should be kept?
+        <div class="row tight"><button class="primary inline" id="gs-use-saved">Use the GitHub copy</button><button class="ghostbtn" id="gs-use-here">Keep this device’s copy</button></div>
+        <p class="cap">Either way, the latest practice of every position is kept.</p></div>`;
+      gsRender();
+      $('#gs-use-saved').onclick = () => { gsSave({ token, id: hit.id, seen: hit.updated_at, sent: 0, syncedAt: Date.now() }); gsUse(R); const c = gsCfg(); c.sent = state.updatedAt; gsSave(c); GS.msg = '<span class="good">Connected. Using the GitHub copy.</span>'; gsRender(); };
+      $('#gs-use-here').onclick = async () => {
+        const cards = { ...state.cards };
+        for (const [id, r] of Object.entries(R.cards)) if (!cards[id] || (r.t || 0) > (cards[id].t || 0)) cards[id] = r;
+        state.cards = cards; state.updatedAt = Date.now(); saveLocal();
+        gsSave({ token, id: hit.id, seen: hit.updated_at, sent: 0, syncedAt: Date.now() });
+        GS.msg = '<span class="good">Connected. This device’s copy is now on GitHub.</span>';
+        await gsSync();
+      };
+      return;
+    }
+  } catch (e) {
+    GS.msg = e.code === 'auth' ? '<span class="bad">GitHub didn’t accept that token.</span> Check that you ticked <b>gist</b> and copied the whole token (it starts with <span class="mono">ghp_</span>).'
+      : '<span class="bad">Couldn’t reach GitHub.</span> Check your internet connection and try again.';
+  }
+  gsRender();
+}
+function gsDisconnect() {
+  if (!confirm('Stop syncing this device? Your studies stay on this device and on GitHub; they just won’t update each other any more.')) return;
+  gsSave(null); GS.err = ''; GS.msg = 'Sync is off on this device.'; gsRender();
+}
+const agoText = t => { const s = Math.round((Date.now() - t) / 1000); return s < 45 ? 'just now' : s < 3600 ? Math.round(s / 60) + ' min ago' : s < 86400 ? Math.round(s / 3600) + ' h ago' : new Date(t).toLocaleDateString(); };
+function gsRender() {
+  setSyncLabel(Sync.mode === 'account' ? 'account' : 'device');
+  const box = $('#gs-box');
+  if (!box) return;
+  box.hidden = IN_CLAUDE;
+  if (IN_CLAUDE) return;
+  const c = gsCfg(), body = $('#gs-body');
+  if (!c) {
+    body.innerHTML = `<p class="cap">Keep your studies and progress the same on your PC and phone. It uses a private file in your own GitHub account. Set it up once on each device.</p>
+      <ol class="steps">
+        <li><a class="ghostbtn sm" href="${TOKEN_URL}" target="_blank" rel="noopener">Create a GitHub token ↗</a><br><span class="cap">Only <b>gist</b> is ticked. Set <b>Expiration</b> to <b>No expiration</b>, press <b>Generate token</b> at the bottom, then copy the token.</span></li>
+        <li>Paste it here and press Connect:
+          <div class="gs-row"><input id="gs-token" type="password" placeholder="ghp_…" autocomplete="off" spellcheck="false"><button class="primary inline" id="gs-go" type="button">Connect</button></div></li>
+      </ol>
+      <div id="gs-msg" class="gs-msg">${GS.msg}</div>`;
+    $('#gs-go').onclick = () => gsConnect($('#gs-token').value);
+    $('#gs-token').onkeydown = e => { if (e.key === 'Enter') gsConnect(e.target.value); };
+    return;
+  }
+  const err = { auth: 'GitHub stopped accepting the token (it may have expired). Disconnect, then connect again with a new token.', gone: 'The sync file was deleted on GitHub. Disconnect, then connect again.', net: 'Couldn’t reach GitHub. It will try again automatically.', http: 'GitHub had a problem. It will try again automatically.' }[GS.err];
+  body.innerHTML = `<p class="gs-st"><span class="sdot ${err ? 'off' : GS.busy ? 'wait' : 'ok'}"></span>${err ? `<span class="bad">${err}</span>` : GS.busy ? 'Syncing…' : `Synced with GitHub${c.syncedAt ? ' · ' + agoText(c.syncedAt) : ''}. Changes on any connected device show up on the others.`}</p>
+    <div class="row tight"><button class="ghostbtn" id="gs-now" type="button">Sync now</button><button class="ghostbtn" id="gs-link" type="button">Copy link for my phone</button><button class="ghostbtn danger" id="gs-off" type="button">Disconnect</button></div>
+    <p class="cap">To connect your phone: press <b>Copy link for my phone</b>, send the link to yourself (email, Messages or WhatsApp), and open it on the phone. Or create a token on the phone and paste it there. Only ever send the link to yourself: anyone with it can see your studies.</p>
+    <div id="gs-msg" class="gs-msg">${GS.msg}</div>`;
+  $('#gs-now').onclick = () => { GS.msg = ''; gsSync(); gsRender(); };
+  $('#gs-off').onclick = gsDisconnect;
+  $('#gs-link').onclick = async () => {
+    const link = Li.here() + '#gsync=' + encodeURIComponent(c.token);
+    try { await navigator.clipboard.writeText(link); GS.msg = '<span class="good">Link copied.</span> Paste it into a message to yourself and open it on your phone.'; }
+    catch (e) { GS.msg = `Copy this link and send it to yourself:<textarea readonly class="mono" rows="3">${esc(link)}</textarea>`; }
+    gsRender();
+  };
+}
+// a phone opened the "link for my phone": connect with the token inside it
+function gsFromLink() {
+  if (IN_CLAUDE || !location.hash.startsWith('#gsync=')) return false;
+  const token = decodeURIComponent(location.hash.slice(7));
+  history.replaceState(null, '', Li.here());
+  showView('progress');
+  setTimeout(() => { $('#gs-box').scrollIntoView({ block: 'start' }); gsConnect(token); }, 50);
+  return true;
+}
+
 // ---------- events ----------
 document.addEventListener('click', e => {
   const go = e.target.closest('[data-go]');
@@ -3405,7 +3598,7 @@ $('#bk-file').addEventListener('change', e => { if (e.target.files[0]) loadBacku
 $('#g-file').addEventListener('change', e => { const f = [...e.target.files]; $('#g-fname').textContent = f.length ? f.map(x => x.name).join(', ') : 'No file chosen'; });
 for (const [id, k] of [['#g-li', 'liUser'], ['#g-cc', 'ccUser']]) $(id).addEventListener('input', e => { state.settings[k] = e.target.value.trim(); touch('meta'); gameLinks(); });
 $('#imp-file').addEventListener('change', e => { $('#imp-fname').textContent = e.target.files[0] ? e.target.files[0].name : 'No file chosen'; });
-document.addEventListener('visibilitychange', () => { if (document.hidden) flush(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { flush(); if (!IN_CLAUDE) gsSync(); } else if (!IN_CLAUDE) gsSoon(300); });
 
 // ---------- boot ----------
 rebuild();
@@ -3413,6 +3606,7 @@ showView('train');
 setSyncLabel('device');
 board.set(Chess0.parse(Chess0.START).b, {});
 initSync();
+if (!IN_CLAUDE) { if (!gsFromLink()) gsSoon(200); setInterval(() => { if (!document.hidden) gsSoon(100); }, 90000); }
 $('#g-fetch').addEventListener('click', fetchGamesDirect);
 if (!IN_CLAUDE) {
   Li.finish().then(res => {
