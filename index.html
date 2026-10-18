@@ -138,9 +138,10 @@ textarea { min-height: 110px; font-family: var(--f-mono); font-size: 13px; resiz
 .trouble { display: flex; flex-direction: column; gap: 10px; }
 .tr { display: flex; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px; align-items: flex-start; }
 .tr-t { min-width: 0; } .tr-t p { margin: 0 0 4px; font-size: 14px; } .tr-t .mono { overflow-wrap: anywhere; }
-.mini { flex: none; display: grid; grid-template-columns: repeat(8, 1fr); width: 112px; height: 112px; border-radius: 4px; overflow: hidden; }
+.mini { flex: none; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); grid-template-rows: repeat(8, minmax(0, 1fr)); width: 112px; height: 112px; border-radius: 4px; overflow: hidden; }
 .mini .sq.last::before { content: ""; position: absolute; inset: 0; background: var(--sq-last); }
 .mini .sq.exp::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 2px var(--good); }
+.mini .sq { min-width: 0; min-height: 0; overflow: hidden; }
 .mini .pc { width: 100%; height: 100%; stroke-width: 4; }
 .table { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -238,8 +239,8 @@ td a { color: var(--accent); }
 a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
 .pos-line { margin: 8px 0 4px; overflow-wrap: anywhere; }
 .pos-prep { font-size: 14px; margin: 10px 0 0; }
-.mboard { display: grid; grid-template-columns: repeat(8, 1fr); aspect-ratio: 1; width: 100%; max-width: 380px; margin: 8px auto 0; border-radius: 6px; overflow: hidden; touch-action: manipulation; }
-.mboard .sq { cursor: pointer; }
+.mboard { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); grid-template-rows: repeat(8, minmax(0, 1fr)); aspect-ratio: 1; width: 100%; max-width: 380px; margin: 8px auto 0; border-radius: 6px; overflow: hidden; touch-action: manipulation; }
+.mboard .sq { cursor: pointer; min-width: 0; min-height: 0; overflow: hidden; }
 .mboard .sq.last::before { content: ""; position: absolute; inset: 0; background: var(--sq-last); }
 .mboard .sq.sel::before { content: ""; position: absolute; inset: 0; background: var(--sq-sel); }
 .mboard .pc { width: 100%; height: 100%; }
