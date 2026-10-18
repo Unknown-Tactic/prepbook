@@ -3505,8 +3505,15 @@ async function gsSync() {
     if (GS.again) { GS.again = false; gsSoon(S ? 8000 : 800); }
   }
 }
+// accepts a token, or a "link for my phone" that contains one
+function gsTokenFrom(text) {
+  text = String(text || '').trim();
+  try { text = decodeURIComponent(text); } catch (e) { /* not encoded */ }
+  const m = text.match(/(ghp_[A-Za-z0-9]+|github_pat_[A-Za-z0-9_]+|gho_[A-Za-z0-9]+)/);
+  return m ? m[1] : text.replace(/^.*#gsync=/, '');
+}
 async function gsConnect(token) {
-  token = (token || '').trim();
+  token = gsTokenFrom(token);
   if (!token) { GS.msg = '<span class="bad">Paste your GitHub token first.</span>'; gsRender(); return; }
   GS.msg = 'Connecting to GitHub…'; gsRender();
   try {
@@ -3567,10 +3574,19 @@ function gsRender() {
       <ol class="steps">
         <li><a class="ghostbtn sm" href="${TOKEN_URL}" target="_blank" rel="noopener">Create a GitHub token ↗</a><br><span class="cap">Only <b>gist</b> is ticked. Set <b>Expiration</b> to <b>No expiration</b>, press <b>Generate token</b> at the bottom, then copy the token.</span></li>
         <li>Paste it here and press Connect:
-          <div class="gs-row"><input id="gs-token" type="password" placeholder="ghp_…" autocomplete="off" spellcheck="false"><button class="primary inline" id="gs-go" type="button">Connect</button></div></li>
+          <div class="gs-row"><input id="gs-token" type="password" placeholder="ghp_… or your sync link" autocomplete="off" spellcheck="false"><button class="primary inline" id="gs-go" type="button">Connect</button></div></li>
       </ol>
+      <div class="notice"><b>Already synced on another device or in Safari?</b> There, open Progress and tap <b>Copy link for my phone</b>. Then come back here and tap:
+        <div class="row tight"><button class="primary inline" id="gs-paste" type="button">Paste sync link and connect</button></div>
+        <p class="cap">On iPhone, tap <b>Paste</b> if it asks. This is the easy way to connect the Home Screen app, which keeps its own storage separate from Safari.</p></div>
       <div id="gs-msg" class="gs-msg">${GS.msg}</div>`;
     $('#gs-go').onclick = () => gsConnect($('#gs-token').value);
+    $('#gs-paste').onclick = async () => {
+      let t = '';
+      try { t = await navigator.clipboard.readText(); } catch (e) { t = ''; }
+      if (!/gh[po]_|github_pat_/.test(t)) { GS.msg = '<span class="bad">Nothing to paste yet.</span> Copy the link first (Progress → Copy link for my phone on your synced device), or paste it into the box above.'; gsRender(); return; }
+      gsConnect(t);
+    };
     $('#gs-token').onkeydown = e => { if (e.key === 'Enter') gsConnect(e.target.value); };
     return;
   }
