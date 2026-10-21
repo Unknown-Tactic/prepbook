@@ -439,6 +439,26 @@ a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
 .pz-set { margin-top: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
 .pz-set summary { cursor: pointer; font-weight: 600; }
 .pz-set .lbl { display: block; }
+.cp-end { margin-left: auto; }
+.cp-prog { margin: 6px 0 0; }
+.cp-line { font-size: 13px; color: var(--muted); margin: 4px 0 0; overflow-wrap: anywhere; }
+.cp-chap { text-align: center; min-height: 20px; }
+.sq.cpto::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 4px var(--hint); z-index: 2; }
+#t-cp .panel .chk { display: flex; }
+#t-cp .panel .primary { margin-top: 14px; }
+.cpchart { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px; }
+.cpchart svg { display: block; width: 100%; height: auto; }
+.cpchart .gl { stroke: var(--line); stroke-width: 1; }
+.cpchart .ax { fill: var(--muted); font: 500 11px var(--f-body); }
+.cpchart .bar { fill: var(--good); }
+.cpchart .hit { fill: transparent; }
+.cpchart .cpb:hover .bar { fill: color-mix(in srgb, var(--good) 75%, var(--ink)); }
+.cpchart .cpb:hover .hit { fill: color-mix(in srgb, var(--ink) 5%, transparent); }
+.cpdots { white-space: nowrap; }
+.cpdots i { font-style: normal; font-weight: 700; font-size: 12px; margin-right: 2px; }
+.cpdots i.ok { color: var(--good); } .cpdots i.no { color: var(--bad); }
+.cptab td { vertical-align: middle; }
+.cpsess { margin-top: 14px; } .cpsess summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
 .gf { display: flex; flex-direction: column; gap: 6px; }
 .gf .lbl { margin-top: 8px; }
 .gf .cap { margin: 0; }
@@ -521,6 +541,7 @@ a.ghostbtn { text-decoration: none; display: inline-flex; align-items: center; }
       </div>
       <div id="t-sum" hidden></div>
       <div id="t-puz" hidden></div>
+      <div id="t-cp" hidden></div>
     </section>
 
     <section class="view" id="v-map" hidden>
@@ -1090,7 +1111,7 @@ function touch(kind, ids = []) {
 }
 function saveLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) { /* full or blocked */ } }
 function metaDoc() {
-  return { v: 2, updatedAt: state.updatedAt, settings: state.settings, gameReport: state.gameReport || null, gameMistakes: state.gameMistakes || {}, sessions: state.sessions.slice(-80), studies: state.studies,
+  return { v: 2, updatedAt: state.updatedAt, settings: state.settings, gameReport: state.gameReport || null, gameMistakes: state.gameMistakes || {}, sessions: state.sessions.slice(-80), cp: state.cp || null, studies: state.studies,
     chapters: state.chapters.map(c => ({ id: c.id, studyId: c.studyId, name: c.name, side: c.side, enabled: c.enabled })) };
 }
 function flush() {
@@ -1142,7 +1163,7 @@ async function initSync() {
         const cards = {};
         bks.docs.forEach(d => { if (d.id[0] === 'k') Object.assign(cards, d.data().cards || {}); });
         for (const [cid, r] of Object.entries(state.cards)) if (!cards[cid] || (r.t || 0) > (cards[cid].t || 0)) cards[cid] = r;
-        next = { ...freshState(), studies: remote.studies || [], chapters, cards, sessions: remote.sessions || [], gameReport: remote.gameReport || null, gameMistakes: remote.gameMistakes || {},
+        next = { ...freshState(), studies: remote.studies || [], chapters, cards, sessions: remote.sessions || [], cp: remote.cp || state.cp || null, gameReport: remote.gameReport || null, gameMistakes: remote.gameMistakes || {},
           settings: { ...freshState().settings, ...remote.settings }, updatedAt: remote.updatedAt };
       } else {
         next = migrate({ ...remote, chapters: chapters.map(c => ({ ...c, study: (remote.chapters.find(x => x.id === c.id) || {}).study })) });
@@ -1784,7 +1805,9 @@ function renderTrain() {
   $('#t-drill').hidden = trainMode !== 'drill';
   $('#t-sum').hidden = trainMode !== 'summary';
   $('#t-puz').hidden = trainMode !== 'puzzle';
+  $('#t-cp').hidden = trainMode !== 'cp';
   if (trainMode === 'puzzle') pzRender();
+  if (trainMode === 'cp') cpRender();
   if (trainMode === 'home') renderHome();
   if (trainMode === 'summary') renderSummary();
 }
@@ -1832,6 +1855,7 @@ function renderHome() {
   $('#start').addEventListener('click', () => startSession());
   $$('.drill[data-drill]', $('#t-home')).forEach(b => b.addEventListener('click', () => openDrill(b.dataset.drill)));
   $('#open-puz') && $('#open-puz').addEventListener('click', openPuzzles);
+  $('#open-cp') && $('#open-cp').addEventListener('click', openChapterPuzzles);
   $('#focus').addEventListener('change', e => { st.focus = e.target.value; touch('meta'); renderHome(); });
   bindSegs($('#t-home'));
 }
@@ -1853,7 +1877,7 @@ function drillsHtml() {
   return `<h3 class="h3">Focused drills</h3><div class="drills">${Object.entries(DRILLS).map(([k, d]) => {
     const n = drillCount(k, '');
     return `<button class="drill" type="button" data-drill="${k}" ${n ? '' : 'disabled'}><span class="dr-t"><span class="dr-n">${d.name}</span><span class="dr-c">${n} ${unit[k][n === 1 ? 0 : 1]}</span></span><span class="dr-d">${n ? d.desc : k === 'cold' ? 'Unlocks once you’ve learned some moves.' : k === 'weak' ? 'Nothing yet. Positions you miss twice show up here.' : k === 'games' ? 'Nothing yet. Run Game check and every position where you left your prep lands here.' : 'Nothing yet. When you play a move that belongs to a similar position, it’s caught here.'}</span></button>`;
-  }).join('')}${IN_CLAUDE ? '' : `<button class="drill pz" type="button" id="open-puz"><span class="dr-t"><span class="dr-n">${esc(pzTitle())}</span><span class="dr-c">${Object.keys(pzDone().seen).length} done</span></span><span class="dr-d">Puzzles from Lichess, taken from real ${esc(pzName(pzSet().angle))} games. Pulled straight from Lichess, a fresh set each time.</span></button>`}</div><div id="picker" hidden></div>`;
+  }).join('')}${cpTile()}${IN_CLAUDE ? '' : `<button class="drill pz" type="button" id="open-puz"><span class="dr-t"><span class="dr-n">${esc(pzTitle())}</span><span class="dr-c">${Object.keys(pzDone().seen).length} done</span></span><span class="dr-d">Puzzles from Lichess, taken from real ${esc(pzName(pzSet().angle))} games. Pulled straight from Lichess, a fresh set each time.</span></button>`}</div><div id="picker" hidden></div>`;
 }
 function openDrill(kind) {
   const studies = state.studies.filter(s => drillCount(kind, s.id) > 0);
@@ -4223,6 +4247,311 @@ function openPuzzles() {
   trainMode = 'puzzle';
   render();
   if (!PZ.cur) { pzLoadQ(); pzNext(); } else pzRender();
+}
+
+// ---------- Chapter puzzles: a warm-up that tests your whole repertoire, with its own record ----------
+// Kept apart from training: answers here never change your review schedule. Records live in state.cp.
+const CPZ = { s: null, sel: null, down: null, timer: 0, view: 'home', last: null };
+function cpState() { const c = state.cp || (state.cp = {}); c.pos = c.pos || {}; c.ch = c.ch || {}; c.sessions = c.sessions || []; return c; }
+function cpSet() { const p = state.settings.cpz || {}; return { size: p.size ?? 20, study: p.study || '', all: !!p.all, line: p.line !== false }; }
+function cpPut(patch) { state.settings.cpz = { ...cpSet(), ...patch }; touch('meta'); }
+// how likely a position is, by how deep it is: moves 2-3 most, then the middle, then deep lines; move 1 rarely
+const cpDepthW = c => { const mv = Math.floor(c.ply / 2) + 1; return mv <= 1 ? 0.15 : mv <= 3 ? 3 : mv <= 6 ? 2.2 : mv <= 10 ? 1.6 : 1.2; };
+const cpMisses = r => (r && r.r ? r.r.split('').filter(x => x === '0').length : 0);
+const cpRate = r => (r && r.r && r.r.length ? cpMisses(r) / r.r.length : 0);
+function cpWeighted(list, wf) {
+  const w = list.map(wf);
+  let t = Math.random() * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < list.length; i++) { t -= w[i]; if (t <= 0) return list[i]; }
+  return list[list.length - 1];
+}
+function cpStudies(side) {
+  const sts = state.studies.filter(st => state.chapters.some(c => c.studyId === st.id && c.side === side && c.enabled));
+  const own = sts.filter(s => !s.example);
+  return own.length ? own : sts;
+}
+function cpPool() {
+  const p = cpSet(), ids = new Set(cpStudies(state.settings.side).filter(s => !p.study || s.id === p.study).map(s => s.id));
+  return rep.cards.filter(c => ids.has(c.study) && (p.all || state.cards[c.id]));
+}
+const cpChName = id => (chapterOf(id) || {}).name || 'Chapter';
+
+// ---------- a session ----------
+function cpStart(forced) {
+  const pool = forced ? forced.map(id => rep.byId.get(id)).filter(Boolean) : cpPool();
+  if (!pool.length) return;
+  const byCh = {};
+  for (const c of pool) for (const ch of c.chapters) (byCh[ch] = byCh[ch] || []).push(c);
+  const p = cpSet();
+  const rec = { id: uid('cp'), at: Date.now(), side: state.settings.side, n: 0, ok: 0, ms: 0, ch: {}, miss: [] };
+  CPZ.s = { rec, byCh, served: {}, used: new Set(), retry: [], forced: forced ? pool.map(c => c.id) : null, size: forced ? pool.length : p.size, count: 0, cur: null, lastId: null };
+  CPZ.view = 'play';
+  cpNext();
+}
+// the chapter that has had the fewest puzzles this session goes next; among those, weaker and longer-untested chapters first
+function cpPickChapter(S2) {
+  const cp = cpState(), now = Date.now();
+  const chs = Object.keys(S2.byCh).filter(ch => S2.byCh[ch].some(c => !S2.used.has(c.id)));
+  if (!chs.length) return null;
+  const min = Math.min(...chs.map(ch => S2.served[ch] || 0));
+  const cand = chs.filter(ch => (S2.served[ch] || 0) === min);
+  return cpWeighted(cand, ch => { const r = cp.ch[ch]; const days = r && r.last ? Math.min(5, (now - r.last) / DAY) : 5; return (1 + 2.5 * cpRate(r)) * (1 + days); });
+}
+function cpNext() {
+  const S2 = CPZ.s;
+  if (!S2) return;
+  clearTimeout(CPZ.timer); CPZ.sel = null;
+  const full = S2.size && S2.count >= S2.size;
+  let card = null, ch = null, retry = false;
+  const ri = S2.retry.findIndex(r => r.at <= S2.count || full);
+  if (ri >= 0) { const r = S2.retry.splice(ri, 1)[0]; card = rep.byId.get(r.id); ch = r.ch; retry = true; }
+  else if (full) return cpFinish();
+  else if (S2.forced) {
+    while (S2.forced.length && !card) card = rep.byId.get(S2.forced.shift());
+    if (!card) return cpFinish();
+    ch = [...card.chapters][0];
+  } else {
+    ch = cpPickChapter(S2);
+    if (!ch) { S2.used.clear(); S2.served = {}; ch = cpPickChapter(S2); }
+    if (!ch) return cpFinish();
+    const cp = cpState();
+    let list = S2.byCh[ch].filter(c => !S2.used.has(c.id) && c.id !== S2.lastId);
+    if (!list.length) list = S2.byCh[ch].filter(c => !S2.used.has(c.id));
+    // deeper-in and distinctive positions, and ones you've missed lately, come up more; nothing is ever left out
+    card = cpWeighted(list, c => cpDepthW(c) * (1 + 1.5 * cpMisses(cp.pos[c.id])) * (cp.pos[c.id] ? 1 : 1.3) / Math.sqrt(c.chapters.size));
+    S2.served[ch] = (S2.served[ch] || 0) + 1;
+    S2.used.add(card.id);
+  }
+  if (!card) return cpFinish();
+  S2.lastId = card.id;
+  S2.cur = { card, ch, retry, pos: Chess0.parse(card.fen), last: card.last, state: 'ask', wrong: null, show: null, t0: Date.now(), msg: '', kind: '' };
+  cpRender();
+}
+function cpScore(ok) {
+  const S2 = CPZ.s, c = S2.cur;
+  if (c.retry || c.scored) return;
+  c.scored = true;
+  const cp = cpState(), rec = S2.rec, id = c.card.id, now = Date.now(), bit = ok ? '1' : '0';
+  rec.n++; if (ok) rec.ok++;
+  rec.ms += Math.min(60000, now - c.t0);
+  const rc = rec.ch[c.ch] || (rec.ch[c.ch] = [0, 0]);
+  rc[0]++; if (ok) rc[1]++;
+  if (!ok && !rec.miss.includes(id)) rec.miss.push(id);
+  const p = cp.pos[id] || (cp.pos[id] = { n: 0, ok: 0, r: '' });
+  p.n++; if (ok) p.ok++; p.r = (p.r + bit).slice(-6); p.t = now;
+  const h = cp.ch[c.ch] || (cp.ch[c.ch] = { n: 0, ok: 0, r: '' });
+  h.n++; if (ok) h.ok++; h.r = (h.r + bit).slice(-20); h.last = now;
+  // saved as you go, so the record is kept even if you just close the app
+  if (!cp.sessions.includes(rec)) { cp.sessions.push(rec); if (cp.sessions.length > 200) cp.sessions = cp.sessions.slice(-200); }
+  S2.count++;
+  if (!ok) S2.retry.push({ id, ch: c.ch, at: S2.count + 4 + Math.floor(Math.random() * 4) });
+  touch('meta');
+}
+const cpMoves = c => esc(c.card.my.map(x => x.san).join(' or '));
+function cpTry(m) {
+  const S2 = CPZ.s, c = S2 && S2.cur;
+  if (!c || c.state === 'done') return;
+  const good = c.card.my.some(x => x.from === m.from && x.to === m.to && (x.promo || null) === (m.promo || null));
+  const after = Chess0.fromSan(c.pos, m.san).next;
+  if (!good) {
+    if (c.state === 'ask') { cpScore(false); c.state = 'fix'; c.msg = `Not quite. Your prep here is <b>${cpMoves(c)}</b>. Play it to continue.`; c.kind = 'bad'; c.show = c.card.my[0]; }
+    c.wrong = { from: m.from, to: m.to };
+    cpRender();
+    setTimeout(() => { if (CPZ.s && CPZ.s.cur === c) { c.wrong = null; cpRender(); } }, 650);
+    return;
+  }
+  const first = c.state === 'ask';
+  if (first) cpScore(true);
+  c.state = 'done'; c.pos = after; c.last = { from: m.from, to: m.to }; c.show = null;
+  c.msg = first ? (c.retry ? 'Got it this time.' : 'Correct!') : 'That’s it. It will come back later in this set.';
+  c.kind = first ? 'good' : '';
+  cpRender();
+  CPZ.timer = setTimeout(cpNext, first ? 650 : 1100);
+}
+function cpReveal(kind) {
+  const c = CPZ.s && CPZ.s.cur;
+  if (!c || c.state === 'done') return;
+  if (c.state === 'ask') cpScore(false);
+  c.state = 'fix';
+  c.show = kind === 'hint' ? { from: c.card.my[0].from } : c.card.my[0];
+  c.msg = kind === 'hint' ? 'Hint: the highlighted piece moves. (Counts as a miss.)' : `The move is <b>${cpMoves(c)}</b>. Play it to continue.`;
+  c.kind = '';
+  cpRender();
+}
+function cpFinish() {
+  const S2 = CPZ.s;
+  clearTimeout(CPZ.timer);
+  CPZ.last = S2 && S2.rec.n ? S2.rec : null;
+  CPZ.s = null;
+  CPZ.view = CPZ.last ? 'report' : 'home';
+  flush();
+  cpRender();
+}
+
+// ---------- drawing ----------
+function cpBoardHtml(c) {
+  const side = state.settings.side, pos = c.pos;
+  let h = '';
+  for (let i = 0; i < 64; i++) {
+    const r = Math.floor(i / 8), f = i % 8;
+    const sq = side === 'w' ? (7 - r) * 8 + f : r * 8 + (7 - f);
+    const pc = pos.b[sq], cls = ((sq & 7) + (sq >> 3)) % 2 ? 'lt' : 'dk';
+    const hl = (c.last && (c.last.from === sq || c.last.to === sq) ? ' last' : '') + (c.wrong && (c.wrong.from === sq || c.wrong.to === sq) ? ' wrongsq' : '')
+      + (CPZ.sel === sq ? ' sel' : '') + (c.show && c.show.from === sq ? ' pulse' : '') + (c.show && c.show.to === sq ? ' cpto' : '');
+    const co = (f === 0 ? `<span class="co rk">${(sq >> 3) + 1}</span>` : '') + (r === 7 ? `<span class="co fl">${'abcdefgh'[sq & 7]}</span>` : '');
+    h += `<div class="sq ${cls}${hl}" data-sq="${sq}">${co}${pc ? `<svg class="pc ${pc === pc.toUpperCase() ? 'w' : 'b'}" viewBox="0 0 100 100"><use href="#pc-${pc === pc.toUpperCase() ? 'w' : 'b'}${pc.toLowerCase()}"/></svg>` : ''}</div>`;
+  }
+  return h;
+}
+function cpRender() {
+  const box = $('#t-cp');
+  if (!box || box.hidden) return;
+  if (CPZ.s && CPZ.s.rec.side !== state.settings.side) { CPZ.s = null; CPZ.view = 'home'; }
+  if (CPZ.view === 'play' && CPZ.s) return cpPlayRender(box);
+  if (CPZ.view === 'report' && CPZ.last) return cpReportRender(box);
+  CPZ.view = 'home';
+  cpHomeRender(box);
+}
+function cpPlayRender(box) {
+  const S2 = CPZ.s, c = S2.cur, p = cpSet();
+  if (!c) return;
+  const done = c.state === 'done';
+  box.innerHTML = `
+    <div class="pz-top"><button class="ghostbtn sm" id="cp-back" type="button">‹ Back</button><h2 class="h pz-h">Chapter puzzles</h2><button class="ghostbtn sm cp-end" id="cp-end" type="button">End &amp; see report</button></div>
+    <p class="cap cp-prog"><b>${S2.count}${S2.size ? ' / ' + S2.size : ''}</b> puzzles · <b>${S2.rec.ok}</b> right first time${S2.retry.length ? ` · ${S2.retry.length} to retry` : ''}${c.retry ? ' · <span class="mix">Retry</span>' : ''}</p>
+    <p class="pz-prompt" data-kind="${c.kind}">${c.msg || `${state.settings.side === 'w' ? 'White' : 'Black'} to play. What’s your move?`}</p>
+    ${p.line ? `<p class="mono cp-line">${c.card.path.length ? esc(Core.fmtPath(c.card.path, 16)) : 'Starting position'}</p>` : ''}
+    <div class="mboard pzboard" id="cp-board">${cpBoardHtml(c)}</div>
+    <div class="row tight pz-act">${done ? '' : `<button class="ghostbtn" id="cp-hint" type="button">Hint</button><button class="ghostbtn" id="cp-show" type="button">Show answer</button>`}</div>
+    <p class="cap cp-chap">${done || c.state === 'fix' ? `From <b>${esc(cpChName(c.ch))}</b>${c.card.chapters.size > 1 ? ` (also in ${c.card.chapters.size - 1} other chapter${c.card.chapters.size === 2 ? '' : 's'})` : ''}` : '&nbsp;'}</p>`;
+  $('#cp-back').onclick = () => { clearTimeout(CPZ.timer); CPZ.s = null; CPZ.view = 'home'; trainMode = 'home'; render(); };
+  $('#cp-end').onclick = cpFinish;
+  $('#cp-hint') && ($('#cp-hint').onclick = () => cpReveal('hint'));
+  $('#cp-show') && ($('#cp-show').onclick = () => cpReveal('show'));
+  const bd = $('#cp-board');
+  if (done) return;
+  const legalFrom = sq => Chess0.legal(c.pos).filter(m => m.from === sq);
+  const pick = (from, to) => {
+    const cands = Chess0.legal(c.pos).filter(m => m.from === from && m.to === to);
+    if (!cands.length) return false;
+    const want = c.card.my.find(x => x.from === from && x.to === to);
+    const m = cands.find(x => (x.promo || null) === (want ? want.promo : 'q')) || cands[0];
+    CPZ.sel = null;
+    cpTry(m);
+    return true;
+  };
+  bd.onpointerdown = e => {
+    const el = e.target.closest('.sq'); if (!el) return;
+    e.preventDefault();
+    const sq = +el.dataset.sq, pc = c.pos.b[sq];
+    if (CPZ.sel != null && CPZ.sel !== sq && pick(CPZ.sel, sq)) return;
+    CPZ.sel = pc && (pc === pc.toUpperCase()) === (c.pos.turn === 'w') && legalFrom(sq).length ? sq : null;
+    CPZ.down = CPZ.sel;
+    $$('#cp-board .sq').forEach(x => x.classList.remove('sel', 'tgt', 'tgtc'));
+    if (CPZ.sel != null) { el.classList.add('sel'); legalFrom(sq).forEach(m => $(`#cp-board .sq[data-sq="${m.to}"]`).classList.add(c.pos.b[m.to] ? 'tgtc' : 'tgt')); }
+  };
+  bd.onpointerup = e => {
+    if (CPZ.down == null) return;
+    const t = document.elementFromPoint(e.clientX, e.clientY), el = t && t.closest && t.closest('#cp-board .sq');
+    const from = CPZ.down; CPZ.down = null;
+    if (el && +el.dataset.sq !== from) pick(from, +el.dataset.sq);
+  };
+}
+function cpHomeRender(box) {
+  const p = cpSet(), side = state.settings.side, studies = cpStudies(side);
+  const pool = cpPool(), chs = new Set(pool.flatMap(c => [...c.chapters]));
+  const learnedAll = rep.cards.filter(c => studies.some(s => s.id === c.study)).length;
+  box.innerHTML = `
+    <div class="pz-top"><button class="ghostbtn sm" id="cp-back" type="button">‹ Back</button><h2 class="h pz-h">Chapter puzzles</h2></div>
+    <p class="cap">A warm-up that tests your whole ${side === 'w' ? 'White' : 'Black'} repertoire: positions from every chapter, mostly 2–3 moves in, plus middle and deep ones. Positions you miss come up a little more often each time, but everything keeps coming up. Separate from your training: answers here don’t change your review schedule.</p>
+    <div class="panel">
+      <span class="lbl">Puzzles per set</span>${seg('cpsize', [['10', '10'], ['20', '20'], ['30', '30'], ['0', 'Endless']], String(p.size))}
+      ${studies.length > 1 ? `<label class="lbl" for="cp-study">From</label><select id="cp-study"><option value="">All ${side === 'w' ? 'White' : 'Black'} studies</option>${studies.map(s => `<option value="${esc(s.id)}" ${p.study === s.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select>` : ''}
+      <label class="chk"><input type="checkbox" id="cp-line" ${p.line ? 'checked' : ''}> Show the moves that led to each position</label>
+      <label class="chk"><input type="checkbox" id="cp-all" ${p.all ? 'checked' : ''}> Include moves I haven’t learned in training yet</label>
+      <button class="primary" id="cp-go" type="button" ${pool.length ? '' : 'disabled'}>Start ${p.size ? p.size + ' puzzles' : 'puzzles'}</button>
+      <p class="cap">${pool.length ? `${pool.length} positions from ${chs.size} chapter${chs.size === 1 ? '' : 's'}.` : learnedAll ? 'No learned positions yet. Train some moves first, or tick “Include moves I haven’t learned”.' : `No ${side === 'w' ? 'White' : 'Black'} chapters yet. Import a study in Library, or switch colour at the top.`}</p>
+    </div>
+    ${cpProgressHtml(side)}`;
+  $('#cp-back').onclick = () => { trainMode = 'home'; render(); };
+  $('#cp-go').onclick = () => cpStart();
+  $('.seg[data-set="cpsize"]', box).onclick = e => { const b = e.target.closest('button'); if (b) { cpPut({ size: +b.dataset.val }); cpRender(); } };
+  $('#cp-study') && ($('#cp-study').onchange = e => { cpPut({ study: e.target.value }); cpRender(); });
+  $('#cp-line').onchange = e => cpPut({ line: e.target.checked });
+  $('#cp-all').onchange = e => { cpPut({ all: e.target.checked }); cpRender(); };
+  cpBindProgress(box);
+}
+function cpReportRender(box) {
+  const r = CPZ.last, side = r.side, acc = pct(r.ok, r.n);
+  const rows = Object.entries(r.ch).map(([ch, [n, ok]]) => ({ ch, n, ok })).sort((a, b) => a.ok / a.n - b.ok / b.n || b.n - a.n);
+  const miss = r.miss.map(id => rep.byId.get(id)).filter(Boolean);
+  box.innerHTML = `
+    <div class="pz-top"><button class="ghostbtn sm" id="cp-home" type="button">‹ Chapter puzzles</button></div>
+    <h2 class="h">Chapter puzzles report</h2>
+    <div class="score"><div class="ring" style="--p:${acc}"><span>${acc}%</span></div>
+      <div class="score-text"><p><b>${r.ok} of ${r.n}</b> right first time.</p><p>${Object.keys(r.ch).length} chapters tested · ${(r.ms / Math.max(1, r.n) / 1000).toFixed(1)}s average answer</p></div></div>
+    <div class="row tight">${miss.length ? `<button class="primary inline" id="cp-redo" type="button">Practise the ${miss.length} I missed</button>` : ''}<button class="ghostbtn" id="cp-again" type="button">Another set</button></div>
+    ${miss.length ? `<h3 class="h3">Positions you missed</h3><div class="trouble">${miss.slice(0, 10).map(c => `<div class="tr">${miniBoard(c.fen, side, c.last, c.my[0])}<div class="tr-t"><p class="mono">${esc(Core.fmtPath(c.path, 8)) || 'Start'}</p><p><span class="good">Your prep: ${esc(c.my.map(x => x.san).join(' or '))}</span></p><p class="cap">${esc(chapterLabel(c))}</p></div></div>`).join('')}</div>` : ''}
+    <h3 class="h3">This set, by chapter</h3>
+    <div class="table"><table><thead><tr><th>Chapter</th><th class="num">Puzzles</th><th class="num">Right</th></tr></thead><tbody>
+      ${rows.map(x => `<tr><td>${esc(cpChName(x.ch))}</td><td class="num">${x.n}</td><td class="num"><b class="${pct(x.ok, x.n) < 70 ? 'bad' : pct(x.ok, x.n) >= 90 ? 'good' : ''}">${pct(x.ok, x.n)}%</b></td></tr>`).join('')}
+    </tbody></table></div>
+    ${cpProgressHtml(side)}`;
+  $('#cp-home').onclick = () => { CPZ.view = 'home'; cpRender(); };
+  $('#cp-again').onclick = () => cpStart();
+  $('#cp-redo') && ($('#cp-redo').onclick = () => cpStart(r.miss.slice()));
+  cpBindProgress(box);
+}
+// the running record: how your sets have gone over time, and every chapter weakest first
+function cpProgressHtml(side) {
+  const cp = cpState(), sess = cp.sessions.filter(s => s.side === side && s.n);
+  const chs = state.chapters.filter(c => c.side === side && c.enabled && !studyOf(c.studyId)?.example);
+  const list = (chs.length ? chs : state.chapters.filter(c => c.side === side && c.enabled)).map(c => ({ c, h: cp.ch[c.id] }));
+  const tested = list.filter(x => x.h && x.h.n), untested = list.filter(x => !x.h || !x.h.n);
+  tested.sort((a, b) => (a.h.r ? 1 - cpRate(a.h) : a.h.ok / a.h.n) - (b.h.r ? 1 - cpRate(b.h) : b.h.ok / b.h.n) || b.h.n - a.h.n);
+  if (!sess.length) return `<h3 class="h3">Your progress</h3><p class="cap">Finish your first set and your record will build up here: a score for every set, and every chapter from weakest to strongest.</p>`;
+  const totN = sess.reduce((a, s) => a + s.n, 0), totOk = sess.reduce((a, s) => a + s.ok, 0);
+  const last5 = sess.slice(-5), prev5 = sess.slice(-10, -5);
+  const p5 = pct(last5.reduce((a, s) => a + s.ok, 0), last5.reduce((a, s) => a + s.n, 0)), q5 = prev5.length ? pct(prev5.reduce((a, s) => a + s.ok, 0), prev5.reduce((a, s) => a + s.n, 0)) : null;
+  const recent = sess.slice(-20);
+  // bar chart: % right per set, oldest to newest
+  const W = 560, H = 150, L = 34, B = 22, T = 10, bw = (W - L - 8) / 20;
+  const y = v => T + (H - T - B) * (1 - v / 100);
+  const bars = recent.map((s, i) => { const v = pct(s.ok, s.n), x = L + 4 + i * bw, top = y(v), hgt = Math.max(2, y(0) - top);
+    const d = new Date(s.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+    return `<g class="cpb"><rect class="hit" x="${x}" y="${T}" width="${bw}" height="${H - T - B}"/><path class="bar" d="M${x + 2},${y(0)} v${-(hgt - 4)} q0,-4 4,-4 h${bw - 12} q4,0 4,4 v${hgt - 4} z"/><title>${d}: ${v}% right (${s.ok} of ${s.n})</title></g>`; }).join('');
+  const grid = [0, 50, 100].map(v => `<line class="gl" x1="${L}" x2="${W - 4}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}%</text>`).join('');
+  const dots = h => (h && h.r ? h.r.slice(-10).split('').map(b => `<i class="${b === '1' ? 'ok' : 'no'}" aria-hidden="true">${b === '1' ? '✓' : '✕'}</i>`).join('') : '');
+  const label = h => { const v = 1 - cpRate(h); return h.n < 3 ? '<span class="pill n">few tries</span>' : v < 0.7 ? '<span class="pill r">needs work</span>' : v < 0.9 ? '<span class="pill y">getting there</span>' : '<span class="pill g">solid</span>'; };
+  return `<h3 class="h3">Your progress</h3>
+    <div class="tiles">
+      <div class="tile"><span class="n">${sess.length}</span><span class="l">Sets</span></div>
+      <div class="tile"><span class="n">${totN}</span><span class="l">Puzzles</span></div>
+      <div class="tile"><span class="n">${pct(totOk, totN)}%</span><span class="l">All-time right</span></div>
+      <div class="tile"><span class="n">${p5}%</span><span class="l">Last 5 sets${q5 != null ? ` · <b class="${p5 > q5 ? 'good' : p5 < q5 ? 'bad' : ''}">${p5 > q5 ? '▲' : p5 < q5 ? '▼' : '='} ${Math.abs(p5 - q5)}</b> vs the 5 before` : ''}</span></div>
+    </div>
+    <p class="lbl">% right first time, last ${recent.length} set${recent.length === 1 ? '' : 's'}</p>
+    <div class="cpchart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Percent right in each of your last ${recent.length} sets">${grid}${bars}<text class="ax" x="${L + 4}" y="${H - 6}">older</text><text class="ax" x="${W - 6}" y="${H - 6}" text-anchor="end">latest</text></svg></div>
+    <h3 class="h3">Chapters, weakest first</h3>
+    <p class="cap">Based on your last 20 puzzles in each chapter. ✓ and ✕ are your last 10 answers, newest on the right.</p>
+    <div class="table"><table class="cptab"><thead><tr><th>Chapter</th><th class="num">Puzzles</th><th class="num">Recent</th><th>Last 10</th><th></th></tr></thead><tbody>
+      ${tested.map(x => `<tr><td>${esc(x.c.name)}</td><td class="num">${x.h.n}</td><td class="num"><b>${Math.round(100 * (1 - cpRate(x.h)))}%</b></td><td class="cpdots">${dots(x.h)}</td><td>${label(x.h)}</td></tr>`).join('')}
+    </tbody></table></div>
+    ${untested.length ? `<p class="cap">Not tested yet: ${esc(untested.map(x => x.c.name).join(', '))}. They come up first in your next sets.</p>` : ''}
+    <details class="cpsess"><summary>All sets</summary><div class="table"><table><thead><tr><th>Date</th><th class="num">Puzzles</th><th class="num">Right</th><th class="num">Chapters</th></tr></thead><tbody>
+      ${sess.slice().reverse().slice(0, 50).map(s => `<tr><td>${new Date(s.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} ${new Date(s.at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}</td><td class="num">${s.n}</td><td class="num">${pct(s.ok, s.n)}%</td><td class="num">${Object.keys(s.ch).length}</td></tr>`).join('')}
+    </tbody></table></div></details>`;
+}
+function cpBindProgress() { /* chart tooltips use native titles; nothing else to bind */ }
+function openChapterPuzzles() {
+  trainMode = 'cp';
+  if (!CPZ.s && CPZ.view === 'play') CPZ.view = 'home';
+  render();
+}
+function cpTile() {
+  const side = state.settings.side, sess = cpState().sessions.filter(s => s.side === side && s.n), last = sess[sess.length - 1];
+  const n = cpPool().length, any = rep.cards.some(x => cpStudies(side).some(s => s.id === x.study));
+  return `<button class="drill pz" type="button" id="open-cp" ${any ? '' : 'disabled'}><span class="dr-t"><span class="dr-n">Chapter puzzles</span><span class="dr-c">${last ? `last set ${pct(last.ok, last.n)}%` : n + ' positions'}</span></span><span class="dr-d">A warm-up across all your chapters, mostly 2–3 moves in. Misses come back more often, but everything stays in. Keeps its own report.</span></button>`;
 }
 
 // ---------- events ----------
